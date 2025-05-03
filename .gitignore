@@ -1,0 +1,49 @@
+# Compiled class files
+target/
+*.class
+
+# Logs
+*.log
+logs/
+!src/main/resources/static/logs/  # keep if needed for frontend
+
+# Temporary files
+*.tmp
+*.swp
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/
+
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Maven wrapper
+.mvn/
+!/.mvn/wrapper/maven-wrapper.jar
+mvnw
+mvnw.cmd
+
+# Spring Boot devtools
+spring-boot-devtools.properties
+
+
+# Environment files (if any)
+.env
+.env.*
+
+# Docker
+*.pid
+*.seed
+docker-compose.override.yml
+
+# Other
+*.bak
+*.orig
