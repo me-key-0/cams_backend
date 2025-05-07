@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface StudentService {
     Optional<Student> getStudentById(Long id);
     List<Student> getAllStudents();
+    Boolean isStudent(Long id);
 }

@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface SuperAdminService {
     Optional<SuperAdmin> getSuperAdminById(Long id);
     List<SuperAdmin> getAllSuperAdmins();
+    Boolean isSuperAdmin(Long id);
 }

@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface LecturerService {
     Optional<Lecturer> getLecturerById(Long id);
     List<Lecturer> getAllLecturers();
+    Boolean isLecturer(Long id);
 }

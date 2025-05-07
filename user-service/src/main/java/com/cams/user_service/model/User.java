@@ -9,7 +9,6 @@ import java.util.List;
 
 @Entity
 @Data
-@Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,7 +18,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
+    @Setter
     private String username;
     private String email;
     private String password;

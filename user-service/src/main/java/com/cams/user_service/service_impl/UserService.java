@@ -29,12 +29,23 @@ public class UserService implements com.cams.user_service.service.UserService {
     @Override
     public User createUser(UserDto userDto) {
         User user = new User();
+
         user.setUsername(userDto.getUsername());
         user.setEmail(userDto.getEmail());
         user.setPassword(userDto.getPassword()); // You should hash the password!
 
         return userRepository.save(user);
 
+    }
+
+    @Override
+    public Void deleteUser(Long id) {
+        Optional<User> user = getUserById(id);
+        if(user.isPresent()) {
+            userRepository.deleteById(id);
+        }
+
+        return null;
     }
 
 }

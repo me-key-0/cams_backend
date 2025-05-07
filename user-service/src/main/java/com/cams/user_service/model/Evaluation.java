@@ -1,11 +1,14 @@
 package com.cams.user_service.model;
 
+import com.cams.user_service.dto.EvaluationAnswerDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -30,6 +33,8 @@ public class Evaluation {
     @JoinColumn(name = "session_id")
     private EvaluationSession session;
 
-    @OneToMany(mappedBy = "rating")
-    private List<EvaluationValue> values;
+    @OneToMany(mappedBy = "evaluation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EvaluationAnswer> answers = new ArrayList<>();
+
+    private LocalDateTime createdAt = LocalDateTime.now();
 }

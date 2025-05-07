@@ -6,23 +6,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EvaluationValue {
+public class EvaluationQuestion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private int value;
-
-    @ManyToOne
-    @JoinColumn(name = "rating_id")
-    private Evaluation rating;
-
-    @ManyToOne
-    @JoinColumn(name = "field_id")
-    private EvaluationField field;
+    private String question;
 }

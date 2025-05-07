@@ -10,4 +10,5 @@ public interface UserService {
     Optional<User> getUserById(Long id);
     List<User> getAllUsers();
     User createUser(UserDto userDto);
+    Void deleteUser(Long id);
 }

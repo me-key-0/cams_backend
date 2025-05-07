@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface AdminService {
     Optional<Admin> getAdminById(Long id);
     List<Admin> getAllAdmins();
+    Boolean isAdmin(Long id);
 }
