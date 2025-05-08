@@ -38,5 +38,4 @@ public class EvaluationController {
     public List<EvaluationQuestion> getEvaluationQuestions() {
         return evaluationService.getEvaluationQuestions();
     }
-
 }
