@@ -11,21 +11,27 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/assessment-grades")
+@RequestMapping("/api/assessment_grades")
 @RequiredArgsConstructor
 public class AssessmentGradeController {
 
     private final AssessmentGradeService assessmentGradeService;
 
-    @PostMapping
-    public ResponseEntity<AssessmentGrade> postAssessmentGrade(@RequestBody AssessmentGradeDto dto) {
-        return new ResponseEntity<>(assessmentGradeService.createAssessmentGrade(dto), HttpStatus.CREATED);
-    }
+    // @PostMapping
+    // public ResponseEntity<AssessmentGrade> postAssessmentGrade(@RequestBody AssessmentGradeDto dto) {
+    //     return new ResponseEntity<>(assessmentGradeService.createAssessmentGrade(dto), HttpStatus.CREATED);
+    // }
 
-    @GetMapping("/student/{studentId}/course/{courseId}")
-    public ResponseEntity<List<AssessmentGrade>> getGradesForStudentInCourse(
-            @PathVariable Long studentId,
-            @PathVariable Long courseId) {
-        return ResponseEntity.ok(assessmentGradeService.getGradesForStudentInCourse(studentId, courseId));
+    // @GetMapping("/student/{studentId}/course/{courseId}")
+    // public ResponseEntity<List<AssessmentGrade>> getGradesForStudentInCourse(
+    //         @PathVariable Long studentId,
+    //         @PathVariable Long courseId) {
+    //     return ResponseEntity.ok(assessmentGradeService.getGradesForStudentInCourse(studentId, courseId));
+    // }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteGrade(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(assessmentGradeService.deleteAssessmentGrade(id));
     }
 }

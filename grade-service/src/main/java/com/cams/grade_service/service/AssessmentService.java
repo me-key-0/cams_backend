@@ -1,7 +1,6 @@
 package com.cams.grade_service.service;
 
 import com.cams.grade_service.dto.AssessmentDto;
-import com.cams.grade_service.model.Assessment;
 
 import java.util.List;
 

@@ -3,7 +3,6 @@ package com.cams.grade_service.service;
 import com.cams.grade_service.dto.AssessmentSubmissionDto;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface AssessmentSubmissionService {
     AssessmentSubmissionDto submitAssessment(AssessmentSubmissionDto dto);

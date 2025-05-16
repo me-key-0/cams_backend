@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/grade-types")
+@RequestMapping("/api/grade_types")
 @RequiredArgsConstructor
 public class GradeTypeController {
 

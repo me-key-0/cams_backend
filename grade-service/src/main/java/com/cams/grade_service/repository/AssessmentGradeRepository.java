@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface AssessmentGradeRepository extends JpaRepository<AssessmentGrade,Long> {
-    List<AssessmentGrade> findByStudentIdAndCourseSessionId(Long studentId,Long courseId);
+    // List<AssessmentGrade> findByStudentIdAndCourseSessionId(Long studentId,Long courseSessionId);
 }

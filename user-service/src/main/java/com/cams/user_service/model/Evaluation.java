@@ -1,6 +1,5 @@
 package com.cams.user_service.model;
 
-import com.cams.user_service.dto.EvaluationAnswerDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

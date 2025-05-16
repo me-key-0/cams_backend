@@ -19,6 +19,9 @@ public class Student {
     private String studentId;
     private String username;
     private String email;
+    private Integer admissionYear;
+    private Integer currentYear;
+    private Integer currentSemester;
 
     @OneToOne
     @JoinColumn(name = "user_id")

@@ -20,4 +20,12 @@ public class GradeType {
     private Long id;
 
     private String name;
+    private Integer value;
+
+    private Long courseSessionId;
+
+    // public GradeType(String name) {
+    //     this.name = name;
+    // }
+
 }

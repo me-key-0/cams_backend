@@ -1,7 +1,6 @@
 package com.cams.grade_service.controller;
 
 import com.cams.grade_service.dto.AssessmentSubmissionDto;
-import com.cams.grade_service.model.AssessmentSubmission;
 import com.cams.grade_service.service.AssessmentSubmissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -9,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/submissions")
+@RequestMapping("/api/submissions")
 public class AssessmentSubmissionController {
 
     @Autowired

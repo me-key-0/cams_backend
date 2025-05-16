@@ -19,6 +19,7 @@ public class Department {
     private Long id;
 
     private String name;
+    private Integer years;
 
     @ManyToOne
     @JoinColumn(name = "college_id")
