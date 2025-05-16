@@ -10,5 +10,7 @@ public interface CourseService {
     List<Course> getAllCourses();
     Course updateCourse(Long id, Course updated);
     void deleteCourse(Long id);
+    List<Course> getCoursesByDepartment(Long departmentId);
+    // List<CourseSession> getCourseSessions(Long studentId, Integer year, Integer semester, Integer academicYear);
 }
 

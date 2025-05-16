@@ -15,7 +15,10 @@ public class Enrollment {
     private Long id;
 
     private Long studentId;
+
     private String enrollmentDate;
+
+    private Boolean isActive;
 
     @ManyToOne
     @JoinColumn(name = "course_session_id")

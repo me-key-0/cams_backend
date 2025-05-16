@@ -13,12 +13,19 @@ public class CourseSession {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    private Integer academicYear;
+    private Integer semester;
+    private Integer year;
 
-    private Long lecturerId;
-    private String semester;
-    private String academicYear;
 
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
+
+    // Placeholder
+    private Long studentId;
+
+    // Placeholder
+    private Long departmentId;
 }
