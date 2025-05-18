@@ -7,14 +7,14 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class CourseSessionDto {
     private Long id;
     private Integer year;
     private Integer semester;
     private Integer academicYear;
     private CourseDto course;
-
+    private String lecturerName;
 }
 

@@ -12,6 +12,8 @@ public interface CourseSessionRepository extends JpaRepository<CourseSession, Lo
 // List<Long> findCourseSessionIdsByYearAndSemesterAndAcademicYear(@Param("year") Integer year, 
 //                                                                 @Param("semester") Integer semester, 
 //                                                                 @Param("academicYear") Integer academicYear);
-List<CourseSession> findByStudentId(Long studentId);
+
+
+// List<CourseSession> findByStudentId(Long studentId);
 
 }

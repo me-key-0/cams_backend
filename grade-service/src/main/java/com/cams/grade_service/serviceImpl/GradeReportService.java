@@ -28,14 +28,12 @@ public class GradeReportService implements com.cams.grade_service.service.GradeR
     @Autowired
     private CourseServiceClient client;
 
-    // @Override
-    // public GradeReport postFinalGrade(GradeReportDto dto) {
+    @Override
+    public GradeReport postFinalGrade(GradeReportDto dto) {
 
-    //     // GradeReport report = new GradeReport(dto.getStudentId(), dto.getCourseId(), dto.getFinalGrade());
-    //     // return reportRepo.save(report);
-
-    //     return null;
-    // }
+        GradeReport report = new GradeReport(dto.getStudentId(), dto.getCourseId(), dto.getFinalGrade());
+        return gradeReportRepository.save(report);
+    }
 
     // @Override
     // public GradeReport getFinalGrade(Long studentId, Long courseId) {
@@ -54,32 +52,28 @@ public class GradeReportService implements com.cams.grade_service.service.GradeR
 
     @Override
     public List<CourseGradeResponseDto> getGradeReports(Long studentId, Integer year, Integer semester) {
-    List<CourseSessionDto> sessions = client.getCourseSessionByStudentId(studentId);
-    
+        List<CourseSessionDto> sessions = client.getCourseSessionByStudentId(studentId);
+        
 
-    // Filter by academic year and semester
-    List<Long> sessionIds = sessions.stream()
-        .filter(cs -> cs.getYear() == year && cs.getSemester() == semester)
-        .map(CourseSessionDto::getId)
-        .toList();
-    
+        // Filter by academic year and semester
+        List<Long> sessionIds = sessions.stream()
+            .filter(cs -> cs.getYear() == year && cs.getSemester() == semester)
+            .map(CourseSessionDto::getId)
+            .toList();
+        
 
-    List<GradeReport> reports = gradeReportRepository.findByStudentIdAndCourseSessionIds(studentId,sessionIds);
-    for (GradeReport cs : reports) {
-            System.out.println("Idddd" + cs.getId());
-        }
-    return reports.stream().map(report -> {
-        CourseSessionDto courseSession = sessions.stream().filter(cs -> cs.getId().equals(report.getCourseSessionId()))
-            .findFirst().orElse(null);
+        List<GradeReport> reports = gradeReportRepository.findByStudentIdAndCourseSessionIds(studentId,sessionIds);
+        return reports.stream().map(report -> {
+            CourseSessionDto courseSession = sessions.stream().filter(cs -> cs.getId().equals(report.getCourseSessionId()))
+                .findFirst().orElse(null);
 
-        return CourseGradeResponseDto.builder()
-            .courseCode(courseSession.getCourse().getCode())
-            .courseName(courseSession.getCourse().getName())
-            .creditHour(courseSession.getCourse().getCreditHour())
-            .finalGrade(report.getFinalGrade())
-            .build();
-    }).toList();
-}
+            return CourseGradeResponseDto.builder()
+                .courseCode(courseSession.getCourse().getCode())
+                .courseName(courseSession.getCourse().getName())
+                .creditHour(courseSession.getCourse().getCreditHour())
+                .finalGrade(report.getFinalGrade())
+                .build();
+        }).toList();
+    }
 
-   
 }

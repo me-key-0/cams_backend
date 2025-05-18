@@ -1,5 +1,9 @@
 package com.cams.course_service.model;
 
+import java.util.List;
+
+import com.cams.course_service.model.Assignment.Status;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,8 +28,20 @@ public class CourseSession {
     private Course course;
 
     // Placeholder
-    private Long studentId;
+    // private Long studentId;
 
     // Placeholder
     private Long departmentId;
+
+    
+    @ElementCollection
+    @CollectionTable(
+        name = "course_session_lecturers",
+        joinColumns = @JoinColumn(name = "course_session_id")
+    )
+    @Column(name = "lecturer_id")
+    private List<Long> lecturerId;
+
+    @Enumerated(EnumType.STRING)
+    private Status status;
 }

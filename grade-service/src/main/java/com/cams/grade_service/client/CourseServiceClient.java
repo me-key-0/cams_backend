@@ -11,6 +11,6 @@ import com.cams.grade_service.dto.CourseSessionDto;
 @FeignClient(name = "course-service") // or use service discovery
 public interface CourseServiceClient {
 
-    @GetMapping("/api/session/student/{studentId}")
+    @GetMapping("/api/enrollment/student/{studentId}")
     List<CourseSessionDto> getCourseSessionByStudentId(@PathVariable Long studentId);
 }

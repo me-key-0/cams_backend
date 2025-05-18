@@ -33,11 +33,11 @@ public class GradeReport {
 
     private Double finalGrade;
 
-    // public GradeReport(Long studentId, Long courseId, Double finalGrade) {
-    //     this.studentId = studentId;
-    //     this.courseSessionId = courseId;
-    //     this.finalGrade = finalGrade;
-    // }
+    public GradeReport(Long studentId, Long courseId, Double finalGrade) {
+        this.studentId = studentId;
+        this.courseSessionId = courseId;
+        this.finalGrade = finalGrade;
+    }
 }
 
 

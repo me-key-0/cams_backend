@@ -18,7 +18,7 @@ public class Lecturer {
 
     private String username;
     private String email;
-    private String lecturerId;
+    
 
     @OneToOne
     @JoinColumn(name = "user_id")

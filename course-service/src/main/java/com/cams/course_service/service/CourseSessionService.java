@@ -12,5 +12,5 @@ import com.cams.course_service.model.CourseSession;
 public interface CourseSessionService {
     CourseSession getCourseSession(@PathVariable Long id);
 
-    List<CourseSessionDto> getCourseSessionsByStudent(Long studentId);
+    // List<CourseSessionDto> getCourseSessionsByStudent(Long studentId);
 } 

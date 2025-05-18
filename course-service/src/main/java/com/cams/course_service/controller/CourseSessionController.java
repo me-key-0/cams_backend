@@ -43,11 +43,11 @@ public class CourseSessionController {
         return new ResponseEntity<CourseSessionDto>(dto, HttpStatus.OK);    
     }
 
-    @GetMapping("/student/{studentId}")
-    public ResponseEntity<List<CourseSessionDto>> getCourseSessionByStudentId(@PathVariable Long studentId) {
-        List<CourseSessionDto> dto = courseSessionService.getCourseSessionsByStudent(studentId);
+    // @GetMapping("/student/{studentId}")
+    // public ResponseEntity<List<CourseSessionDto>> getCourseSessionByStudentId(@PathVariable Long studentId) {
+    //     List<CourseSessionDto> dto = courseSessionService.getCourseSessionsByStudent(studentId);
     
-        return new ResponseEntity<List<CourseSessionDto>>(dto, HttpStatus.OK);    
-    }
+    //     return new ResponseEntity<List<CourseSessionDto>>(dto, HttpStatus.OK);    
+    // }
 
 }

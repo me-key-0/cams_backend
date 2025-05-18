@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:5173"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+      routes:
+        - id: course-service
+          uri: lb://course-service
+          predicates:
+            - Path=/api/courses/**, /api/enrollment/**, /api/assignment/**
+
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=1
+
+        - id: resource-service
+          uri: lb://resource-service
+          predicates:
+            - Path=/api/resources/**
+          filters:
+            - StripPrefix=1
+
+        - id: grade-service
+          uri: lb://grade-service
+          predicates:
+            - Path=/api/grades/**
+
+        - id: communication-service
+          uri: lb://communication-service
+          predicates:
+            - Path=/api/communications/**
+          filters:
+            - StripPrefix=1
+
+server:
+  port: 8760
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true 

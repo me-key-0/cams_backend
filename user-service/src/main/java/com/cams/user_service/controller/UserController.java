@@ -34,4 +34,6 @@ public class UserController {
         userService.deleteUser(id);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
+
+
 }
