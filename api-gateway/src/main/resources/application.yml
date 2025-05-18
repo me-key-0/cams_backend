@@ -3,23 +3,11 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      globalcors:
-        corsConfigurations:
-          '[/**]':
-            allowedOrigins: "http://localhost:5173"
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
-            allowedHeaders: "*"
-            allowCredentials: true
       routes:
         - id: course-service
           uri: lb://course-service
           predicates:
-            - Path=/api/courses/**, /api/enrollment/**, /api/assignment/**
+            - Path=/api/courses/**, /api/enrollment/**, /api/assignment/**, /api/session/**
 
         - id: auth-service
           uri: lb://auth-service
@@ -38,9 +26,7 @@ spring:
         - id: resource-service
           uri: lb://resource-service
           predicates:
-            - Path=/api/resources/**
-          filters:
-            - StripPrefix=1
+            - Path=/api/v1/resources/**
 
         - id: grade-service
           uri: lb://grade-service

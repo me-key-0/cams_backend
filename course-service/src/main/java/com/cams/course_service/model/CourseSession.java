@@ -36,8 +36,8 @@ public class CourseSession {
     
     @ElementCollection
     @CollectionTable(
-        name = "course_session_lecturers",
-        joinColumns = @JoinColumn(name = "course_session_id")
+        name = "course_session_lecturers"
+        // joinColumns = @JoinColumn(name = "course_session_id")
     )
     @Column(name = "lecturer_id")
     private List<Long> lecturerId;

@@ -15,6 +15,7 @@ import com.cams.course_service.model.Course;
 import com.cams.course_service.model.CourseSession;
 import com.cams.course_service.serviceImpl.CourseSessionService;
 import org.springframework.http.HttpStatus;
+import jakarta.persistence.EntityNotFoundException;
 
 @RestController
 @RequestMapping("/api/session")
@@ -32,7 +33,6 @@ public class CourseSessionController {
         courseDto.setCreditHour(course.getCreditHour());
         courseDto.setName(course.getName());
 
-
         CourseSessionDto dto = new CourseSessionDto();
         dto.setId(session.getId());
         dto.setAcademicYear(session.getAcademicYear());
@@ -43,11 +43,16 @@ public class CourseSessionController {
         return new ResponseEntity<CourseSessionDto>(dto, HttpStatus.OK);    
     }
 
-    // @GetMapping("/student/{studentId}")
-    // public ResponseEntity<List<CourseSessionDto>> getCourseSessionByStudentId(@PathVariable Long studentId) {
-    //     List<CourseSessionDto> dto = courseSessionService.getCourseSessionsByStudent(studentId);
-    
-    //     return new ResponseEntity<List<CourseSessionDto>>(dto, HttpStatus.OK);    
-    // }
-
+    @GetMapping("/{id}/exists")
+    public ResponseEntity<Boolean> checkCourseSessionExists(@PathVariable Long id) {
+        try {
+            courseSessionService.getCourseSession(id);
+            return ResponseEntity.ok(true);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.ok(false);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(false);
+        }
+    }
 }
