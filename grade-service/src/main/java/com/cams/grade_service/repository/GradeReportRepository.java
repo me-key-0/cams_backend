@@ -1,6 +1,6 @@
 package com.cams.grade_service.repository;
 
-import com.cams.grade_service.dto.GradeReportView;
+
 import com.cams.grade_service.model.GradeReport;
 
 import java.util.List;

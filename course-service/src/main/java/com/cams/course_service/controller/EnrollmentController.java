@@ -3,12 +3,9 @@ package com.cams.course_service.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.cams.course_service.dto.CourseSessionDto;
-import com.cams.course_service.model.CourseSession;
 import com.cams.course_service.service.EnrollmentService;
 
 @RestController

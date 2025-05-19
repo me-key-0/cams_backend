@@ -1,16 +1,12 @@
 package com.cams.course_service.serviceImpl;
 
 import com.cams.course_service.model.Course;
-import com.cams.course_service.model.CourseSession;
 import com.cams.course_service.repository.CourseRepository;
-import com.cams.course_service.repository.CourseSessionRepository;
-import com.cams.course_service.repository.EnrollmentRepository;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.cams.course_service.serviceImpl.CourseService;
-
-import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
@@ -20,11 +16,11 @@ public class CourseService implements com.cams.course_service.service.CourseServ
     @Autowired
     private CourseRepository courseRepository;
 
-    @Autowired
-    private CourseSessionRepository courseSessionRepository;
+    // @Autowired
+    // private CourseSessionRepository courseSessionRepository;
 
-    @Autowired
-    private EnrollmentRepository enrollmentRepository;
+    // @Autowired
+    // private EnrollmentRepository enrollmentRepository;
 
     @Override
     public Course createCourse(Course course) {

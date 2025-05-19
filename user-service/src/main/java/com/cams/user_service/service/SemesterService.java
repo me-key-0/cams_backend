@@ -1,7 +1,6 @@
 package com.cams.user_service.service;
 
 import com.cams.user_service.model.Semester;
-import org.w3c.dom.stylesheets.LinkStyle;
 
 import java.util.List;
 import java.util.Optional;

@@ -13,15 +13,15 @@ spring:
           uri: lb://auth-service
           predicates:
             - Path=/api/auth/**
-          filters:
-            - StripPrefix=1
+          # filters:
+          #   - StripPrefix=1
 
         - id: user-service
           uri: lb://user-service
           predicates:
             - Path=/api/users/**
-          filters:
-            - StripPrefix=1
+          # filters:
+          #   - StripPrefix=1
 
         - id: resource-service
           uri: lb://resource-service
@@ -39,6 +39,10 @@ spring:
             - Path=/api/communications/**
           filters:
             - StripPrefix=1
+  security:
+    jwt:
+      secret: ${JWT_SECRET:5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437}
+      expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
 
 server:
   port: 8760

@@ -1,9 +1,5 @@
 package com.cams.grade_service.model;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-import com.cams.grade_service.model.Assessment.AssessmentType;
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -11,4 +11,6 @@ public interface UserService {
     List<User> getAllUsers();
     User createUser(UserDto userDto);
     Void deleteUser(Long id);
+    boolean validateCredentials(String email, String password);
+    Optional<User> getUserByEmail(String email);
 }

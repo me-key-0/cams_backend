@@ -27,17 +27,13 @@ public class CourseSession {
     @JoinColumn(name = "course_id")
     private Course course;
 
-    // Placeholder
-    // private Long studentId;
-
-    // Placeholder
     private Long departmentId;
 
     
     @ElementCollection
     @CollectionTable(
-        name = "course_session_lecturers"
-        // joinColumns = @JoinColumn(name = "course_session_id")
+        name = "course_session_lecturers",
+        joinColumns = @JoinColumn(name = "course_session_id")
     )
     @Column(name = "lecturer_id")
     private List<Long> lecturerId;

@@ -4,13 +4,8 @@ import com.cams.grade_service.client.CourseServiceClient;
 import com.cams.grade_service.dto.CourseGradeResponseDto;
 import com.cams.grade_service.dto.CourseSessionDto;
 import com.cams.grade_service.dto.GradeReportDto;
-import com.cams.grade_service.dto.GradeReportView;
 import com.cams.grade_service.model.GradeReport;
-import com.cams.grade_service.model.GradeType;
 import com.cams.grade_service.repository.GradeReportRepository;
-import com.cams.grade_service.repository.GradeTypeRepository;
-
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +17,8 @@ public class GradeReportService implements com.cams.grade_service.service.GradeR
     @Autowired
     private GradeReportRepository gradeReportRepository;
 
-    @Autowired
-    private GradeTypeRepository typeRepo;
+    // @Autowired
+    // private GradeTypeRepository typeRepo;
 
     @Autowired
     private CourseServiceClient client;

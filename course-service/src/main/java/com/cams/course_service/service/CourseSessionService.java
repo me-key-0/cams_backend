@@ -1,10 +1,7 @@
 package com.cams.course_service.service;
 
-import java.util.List;
 
 import org.springframework.web.bind.annotation.PathVariable;
-
-import com.cams.course_service.dto.CourseSessionDto;
 import com.cams.course_service.model.CourseSession;
 
 

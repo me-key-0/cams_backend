@@ -2,13 +2,10 @@ package com.cams.user_service.service_impl;
 
 import com.cams.user_service.model.College;
 import com.cams.user_service.model.Department;
-import com.cams.user_service.repository.CollegeRepository;
 import com.cams.user_service.repository.DepartmentRepository;
 import com.cams.user_service.service.CollegeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 

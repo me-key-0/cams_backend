@@ -1,15 +1,10 @@
 package com.cams.grade_service.serviceImpl;
 
-import com.cams.grade_service.dto.AssessmentGradeDto;
 import com.cams.grade_service.model.AssessmentGrade;
-import com.cams.grade_service.model.GradeType;
 import com.cams.grade_service.repository.AssessmentGradeRepository;
-import com.cams.grade_service.repository.GradeTypeRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 import java.util.Optional;
 
 @Service

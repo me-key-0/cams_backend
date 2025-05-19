@@ -1,7 +1,6 @@
 package com.cams.resource_service.service;
 
 import com.cams.resource_service.model.ResourceMaterial;
-import com.cams.resource_service.model.enums.ResourceStatus;
 import com.cams.resource_service.model.enums.ResourceType;
 import org.springframework.web.multipart.MultipartFile;
 
