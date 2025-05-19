@@ -1,6 +1,7 @@
 package com.cams.user_service.controller;
 
 import com.cams.user_service.dto.UserDto;
+import com.cams.user_service.dto.UserResponse;
 import com.cams.user_service.model.User;
 import com.cams.user_service.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,9 +46,8 @@ public class UserController {
     }
 
     @GetMapping("/email/{email}")
-    public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
-        Optional<User> user = userService.getUserByEmail(email);
-        return user.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<UserResponse> getUserByEmail(@PathVariable String email) {
+        UserResponse user = userService.getUserByEmail(email);
+        return new ResponseEntity<UserResponse>(user,HttpStatus.OK);
     }
 }

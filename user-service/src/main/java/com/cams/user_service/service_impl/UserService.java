@@ -1,6 +1,7 @@
 package com.cams.user_service.service_impl;
 
 import com.cams.user_service.dto.UserDto;
+import com.cams.user_service.dto.UserResponse;
 import com.cams.user_service.model.User;
 import com.cams.user_service.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -55,20 +56,14 @@ public class UserService implements com.cams.user_service.service.UserService {
     @Override
     public boolean validateCredentials(String email, String password) {
         log.info("Validating credentials for email: {}", email);
-        Optional<User> userOptional = getUserByEmail(email);
-        if (userOptional.isEmpty()) {
+        UserResponse user = getUserByEmail(email);
+        if (user == null) {
             log.warn("User not found for email: {}", email);
             return false;
         }
         
-        User user = userOptional.get();
-        log.info("Found user: {}", user.getEmail());
-        log.info("Input password: {}", password);
-        log.info("Stored hashed password: {}", user.getPassword());
         
-        // Generate a new hash of the input password to compare
-        String newHash = passwordEncoder.encode(password);
-        log.info("New hash of input password: {}", newHash);
+        log.info("Found user: {}", user.getEmail());
         
         boolean matches = passwordEncoder.matches(password, user.getPassword());
         log.info("Password matches: {}", matches);
@@ -76,15 +71,19 @@ public class UserService implements com.cams.user_service.service.UserService {
     }
 
     @Override
-    public Optional<User> getUserByEmail(String email) {
+    public UserResponse getUserByEmail(String email) {
         log.info("Getting user by email: {}", email);
-        Optional<User> user = userRepository.findByEmail(email);
-        if (user.isPresent()) {
-            log.info("Found user: {}", user.get().getEmail());
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isPresent()) {
+            log.info("Found user: {}", userOpt.get().getEmail());
         } else {
             log.warn("No user found for email: {}", email);
+            return null;
         }
-        return user;
+        User user = userOpt.get();
+        UserResponse response = new UserResponse(user.getId(), user.getEmail(),user.getPassword(), user.getFirstname(), user.getLastname(), user.getRole(), user.getProfileImage(), user.isVerified());
+        
+        return response;
     }
 }
 

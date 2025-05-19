@@ -1,5 +1,6 @@
 package com.cams.auth_service.config;
 
+import feign.Logger;
 import feign.Response;
 import feign.codec.ErrorDecoder;
 import org.springframework.context.annotation.Bean;
@@ -8,6 +9,11 @@ import org.springframework.security.authentication.BadCredentialsException;
 
 @Configuration
 public class FeignConfig {
+
+    @Bean
+    Logger.Level feignLoggerLevel() {
+        return Logger.Level.FULL;
+    }
 
     @Bean
     public ErrorDecoder errorDecoder() {

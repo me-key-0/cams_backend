@@ -52,4 +52,26 @@ eureka:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
   instance:
-    prefer-ip-address: true 
+    prefer-ip-address: true
+
+logging:
+  level:
+    root: INFO
+    com.cams.api_gateway: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.http.server.reactive: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.netty: DEBUG
+    io.netty: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+  health:
+    gateway:
+      enabled: true 

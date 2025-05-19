@@ -9,9 +9,11 @@ import com.cams.auth_service.model.Role;
 import com.cams.auth_service.security.JwtTokenProvider;
 import com.cams.auth_service.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -21,24 +23,37 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest loginRequest) {
+        log.debug("Attempting to validate credentials for user: {}", loginRequest.getEmail());
+        
         // Validate credentials with user service
+        
         boolean isValid = userServiceClient.validateCredentials(loginRequest.getEmail(), loginRequest.getPassword());
+        
+        log.debug("Credential validation result for user {}: {}", loginRequest.getEmail(), isValid);
+        
         if (!isValid) {
+            log.warn("Invalid credentials for user: {}", loginRequest.getEmail());
             throw new BadCredentialsException("Invalid email or password");
         }
 
         // Get user details
+        log.debug("Fetching user details for: {}", loginRequest.getEmail());
         UserResponse userResponse = userServiceClient.getUserByEmail(loginRequest.getEmail());
+        log.debug("User details retrieved for: {}, verified: {}", loginRequest.getEmail(), userResponse.isVerified());
+        
         if (!userResponse.isVerified()) {
+            log.warn("Unverified account attempt for user: {}", loginRequest.getEmail());
             throw new BadCredentialsException("Account is not verified");
         }
 
         // Generate JWT token
+        log.debug("Generating JWT token for user: {}", loginRequest.getEmail());
         String token = jwtTokenProvider.generateToken(
             userResponse.getId(),
             userResponse.getEmail(),
             userResponse.getRole()
         );
+        log.debug("JWT token generated successfully for user: {}", loginRequest.getEmail());
 
         // Create user DTO
         UserDto userDto = UserDto.builder()

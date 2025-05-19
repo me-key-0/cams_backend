@@ -1,5 +1,4 @@
-package com.cams.auth_service.client;
-
+package com.cams.user_service.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

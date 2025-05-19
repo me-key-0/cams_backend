@@ -1,6 +1,7 @@
 package com.cams.user_service.service;
 
 import com.cams.user_service.dto.UserDto;
+import com.cams.user_service.dto.UserResponse;
 import com.cams.user_service.model.User;
 
 import java.util.List;
@@ -12,5 +13,5 @@ public interface UserService {
     User createUser(UserDto userDto);
     Void deleteUser(Long id);
     boolean validateCredentials(String email, String password);
-    Optional<User> getUserByEmail(String email);
+    UserResponse getUserByEmail(String email);
 }

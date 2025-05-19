@@ -1,10 +1,11 @@
 package com.cams.auth_service.security;
 
+import com.cams.auth_service.config.JwtProperties;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -12,24 +13,20 @@ import java.util.Date;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtTokenProvider {
 
-    @Value("${spring.security.jwt.secret}")
-    private String jwtSecret;
-
-    @Value("${spring.security.jwt.expiration}")
-    private long jwtExpiration;
-
+    private final JwtProperties jwtProperties;
     private SecretKey key;
 
     @PostConstruct
     public void init() {
-        this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        this.key = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes());
     }
 
     public String generateToken(Long userId, String email, String role) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpiration);
+        Date expiryDate = new Date(now.getTime() + jwtProperties.getExpiration());
 
         return Jwts.builder()
                 .claim("email", email)
