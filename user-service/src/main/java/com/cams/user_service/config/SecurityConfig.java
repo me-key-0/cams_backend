@@ -20,8 +20,8 @@ public class SecurityConfig {
             .cors(cors -> cors.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/users/validate", "/api/users/email/**").permitAll()
-                .anyRequest().authenticated()
+                // .requestMatchers("/api/users/validate", "/api/users/email/**").permitAll()
+                .anyRequest().permitAll()
             );
         
         return http.build();

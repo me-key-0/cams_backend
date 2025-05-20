@@ -1,0 +1,8 @@
+local:
+  storage:
+    # Base directory for storing resources
+    base-dir: ./resources
+    # Maximum file size in bytes (default: 25MB)
+    max-size-bytes: 25600000
+
+# Add existing configurations here

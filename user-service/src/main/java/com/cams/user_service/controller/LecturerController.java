@@ -15,10 +15,30 @@ import com.cams.user_service.service.LecturerService;
 import com.cams.user_service.dto.LecturerDto;
 
 @RestController
-@RequestMapping("/api/user/lecturer")
+@RequestMapping("/api/users/lecturer")
 public class LecturerController {
     @Autowired
     private LecturerService lecturerService;
+
+    private LecturerDto convertToDto(Lecturer lecturer) {
+        LecturerDto dto = new LecturerDto();
+        dto.setId(lecturer.getId());
+        dto.setFirstName(lecturer.getUser().getFirstname());
+        dto.setLastName(lecturer.getUser().getLastname());
+        dto.setEmail(lecturer.getUser().getEmail());
+        dto.setDepartment(lecturer.getDepartment() != null ? lecturer.getDepartment().getName() : null);
+        return dto;
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<LecturerDto> getLecturerByUserId(@PathVariable Long userId) {
+        Optional<Lecturer> lecturer = lecturerService.getLecturerByUserId(userId);
+        if (!lecturer.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(convertToDto(lecturer.get()), HttpStatus.OK);
+    }
+
 
     @GetMapping("/{lecturerId}")
     public ResponseEntity<LecturerDto> getLecturerById(@PathVariable Long lecturerId) {
@@ -33,10 +53,6 @@ public class LecturerController {
         }
 
         Lecturer l = lecturer.get();
-        System.out.println("Lecturer details - ID: " + l.getId());
-        System.out.println("User details - " + (l.getUser() != null ? 
-            "FirstName: " + l.getUser().getFirstname() + ", LastName: " + l.getUser().getLastname() :
-            "User is null"));
         
         LecturerDto dto = new LecturerDto();
         dto.setId(l.getId());
@@ -48,4 +64,6 @@ public class LecturerController {
         System.out.println("Returning DTO with name: " + dto.getFullName());
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
+
+
 }

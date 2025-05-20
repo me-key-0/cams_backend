@@ -39,5 +39,8 @@ public class LecturerService implements com.cams.user_service.service.LecturerSe
         return false;
     }
 
-    
+    @Override
+    public Optional<Lecturer> getLecturerByUserId(Long userId) {
+        return lecturerRepository.findByUserId(userId);
+    }
 }

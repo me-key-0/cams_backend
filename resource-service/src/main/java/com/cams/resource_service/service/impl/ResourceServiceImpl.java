@@ -1,92 +1,95 @@
 package com.cams.resource_service.service.impl;
 
 import com.cams.resource_service.client.CourseServiceClient;
+import com.cams.resource_service.config.LocalStorageConfig;
 import com.cams.resource_service.exception.CourseSessionNotFoundException;
+import com.cams.resource_service.exception.ResourceException;
+import com.cams.resource_service.exception.StorageException;
 import com.cams.resource_service.exception.UnauthorizedAccessException;
 import com.cams.resource_service.model.ResourceMaterial;
 import com.cams.resource_service.model.enums.ResourceStatus;
 import com.cams.resource_service.model.enums.ResourceType;
 import com.cams.resource_service.repository.ResourceMaterialRepository;
+import com.cams.resource_service.service.LocalFileStorageService;
 import com.cams.resource_service.service.ResourceService;
-import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
 import feign.FeignException;
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ResourceServiceImpl implements ResourceService {
 
-    private final ResourceMaterialRepository resourceRepository;
-    private final CourseServiceClient courseServiceClient;
-    private final Cloudinary cloudinary;
+    @Autowired
+    private ResourceMaterialRepository resourceRepository;
     
-    private static final long MAX_FILE_SIZE = 25L * 1024 * 1024; // 25MB in bytes
+    @Autowired
+    private CourseServiceClient courseServiceClient;
+    
+    @Autowired
+    private LocalFileStorageService fileStorageService;
+    
+    @Autowired
+    private LocalStorageConfig storageConfig;
+
+    @PostConstruct
+    private void init() {
+        try {
+            Files.createDirectories(Paths.get(storageConfig.getBaseDir()));
+        } catch (IOException e) {
+            log.error("Failed to create base directory", e);
+            throw new StorageException("Failed to initialize storage", e);
+        }
+    }
 
     @Override
     @Transactional
     public ResourceMaterial uploadResource(MultipartFile file, String title, String description,
                                          ResourceType type, Long courseSessionId, Long uploadedBy,
                                          List<String> categories) {
-        // Validate course session and lecturer permissions
-        validateCourseSession(courseSessionId, uploadedBy);
-        
-        // For link resources, we don't need file validation
-        if (type != ResourceType.LINK) {
-            validateFileSize(file);
-            validateFileType(file, type);
-        }
-
         try {
-            String fileUrl;
-            String fileName;
-            long fileSize = 0;
-
-            // Handle file upload for non-link resources
-            if (type != ResourceType.LINK) {
-                Map<?, ?> uploadResult = cloudinary.uploader().upload(
-                    file.getBytes(),
-                    ObjectUtils.asMap(
-                        "resource_type", getCloudinaryResourceType(type),
-                        "folder", "cams/resources/" + courseSessionId
-                    )
-                );
-                fileUrl = uploadResult.get("secure_url").toString();
-                fileName = file.getOriginalFilename();
-                fileSize = file.getSize();
-            } else {
-                // For link resources, use the description as the URL
-                fileUrl = description;
-                fileName = title;
-            }
-
-            // Create resource material
-            ResourceMaterial resource = ResourceMaterial.builder()
-                .title(title)
-                .description(description)
-                .type(type)
-                .fileUrl(fileUrl)
-                .fileName(fileName)
-                .fileSize(fileSize)
-                .courseSessionId(courseSessionId)
-                .uploadedBy(uploadedBy)
-                .categories(new HashSet<>(categories))
-                .status(ResourceStatus.ACTIVE)
-                .build();
-
+            // Validate course session
+            courseServiceClient.validateLecturerForCourseSession(uploadedBy, courseSessionId);
+            
+            // Generate unique filename
+            String fileName = file.getOriginalFilename();
+            
+            // Construct file path using STORAGE_DIRECTORY constant
+            String absolutePath = LocalStorageConfig.getFullFilePath(courseSessionId, fileName);
+            
+            // Store file using absolute path
+            fileStorageService.storeFile(file, Paths.get(absolutePath), type);
+            
+            // Create resource
+            ResourceMaterial resource = new ResourceMaterial();
+            resource.setTitle(title);
+            resource.setDescription(description);
+            resource.setType(type);
+            resource.setFileUrl(absolutePath);
+            resource.setFileName(fileName);
+            resource.setOriginalFileName(file.getOriginalFilename());
+            resource.setFileSize(file.getSize());
+            resource.setUploadedBy(uploadedBy);
+            resource.setCourseSessionId(courseSessionId);
+            resource.setCategories(new HashSet<>(categories));
+            resource.setStatus(ResourceStatus.ACTIVE);
+            
             return resourceRepository.save(resource);
+        } catch (FeignException.NotFound e) {
+            throw new CourseSessionNotFoundException("Course session not found with id: " + courseSessionId);
         } catch (IOException e) {
-            log.error("Failed to upload file to Cloudinary", e);
-            throw new RuntimeException("Failed to upload file", e);
+            throw new StorageException("Failed to store file", e);
         }
     }
 
@@ -148,11 +151,28 @@ public class ResourceServiceImpl implements ResourceService {
         // Validate lecturer permissions before deletion
         validateCourseSession(resource.getCourseSessionId(), resource.getUploadedBy());
 
-        // Soft delete
-        resource.setStatus(ResourceStatus.DELETED);
-        resourceRepository.save(resource);
-
-        // TODO: Implement Cloudinary cleanup in a scheduled job
+        try {
+            // Delete the file if it exists (for non-link resources)
+            if (resource.getType() != ResourceType.LINK) {
+                String filePath = resource.getFileUrl();
+                if (filePath != null && !filePath.isEmpty()) {
+                    try {
+                        fileStorageService.deleteFileByPath(Paths.get(filePath));
+                        log.info("Successfully deleted file: {}", filePath);
+                    } catch (IOException e) {
+                        log.error("Error deleting file: {}", filePath, e);
+                        throw new ResourceException("Failed to delete file: " + e.getMessage());
+                    // }
+                }
+            }
+            
+            // Delete the database record
+            resourceRepository.delete(resource);
+            log.info("Successfully deleted resource with id: {}", id);
+        }
+    }catch (Exception e) {
+        log.error("Error deleting resource", e);
+        throw new ResourceException("Failed to delete resource: " + e.getMessage());}
     }
 
     @Override
@@ -169,37 +189,45 @@ public class ResourceServiceImpl implements ResourceService {
         return resourceRepository.findByUploadedByAndStatus(uploadedBy, ResourceStatus.ACTIVE);
     }
 
-    private void validateFileSize(MultipartFile file) {
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("File size exceeds maximum limit of 25MB");
+    @Override
+    public byte[] getFileContent(ResourceMaterial resource) {
+        try {
+            if (resource.getType() == ResourceType.LINK) {
+                throw new StorageException("Cannot download link resource");
+            }
+            
+            String filePath = resource.getFileUrl();
+            return Files.readAllBytes(Paths.get(filePath));
+        } catch (IOException e) {
+            throw new StorageException("Failed to read file content", e);
         }
     }
 
-    private void validateFileType(MultipartFile file, ResourceType type) {
-        String contentType = file.getContentType();
-        if (contentType == null) {
-            throw new IllegalArgumentException("File type cannot be determined");
-        }
+    // private void validateFileSize(MultipartFile file) {
+    //     if (file.getSize() > storageConfig.getMaxSizeBytes()) {
+    //         throw new IllegalArgumentException(
+    //             String.format("File size exceeds maximum limit of %d bytes", storageConfig.getMaxSizeBytes())
+    //         );
+    //     }
+    // }
 
-        boolean isValid = switch (type) {
-            case DOCUMENT -> contentType.matches("application/pdf|application/msword|application/vnd.openxmlformats-officedocument.*|application/vnd.ms-excel|application/vnd.ms-powerpoint");
-            case VIDEO -> contentType.startsWith("video/");
-            case PHOTO -> contentType.startsWith("image/");
-            case FOLDER, LINK -> true;
-        };
+    // private void validateFileType(MultipartFile file, ResourceType type) {
+    //     String contentType = file.getContentType();
+    //     if (contentType == null) {
+    //         throw new IllegalArgumentException("File type cannot be determined");
+    //     }
 
-        if (!isValid) {
-            throw new IllegalArgumentException("Invalid file type for resource type: " + type);
-        }
-    }
+    //     boolean isValid = switch (type) {
+    //         case DOCUMENT -> contentType.matches("application/pdf|application/msword|application/vnd.openxmlformats-officedocument.*|application/vnd.ms-excel|application/vnd.ms-powerpoint");
+    //         case VIDEO -> contentType.startsWith("video/");
+    //         case PHOTO -> contentType.startsWith("image/");
+    //         case FOLDER, LINK -> true;
+    //     };
 
-    private String getCloudinaryResourceType(ResourceType type) {
-        return switch (type) {
-            case VIDEO -> "video";
-            case PHOTO -> "image";
-            default -> "raw";
-        };
-    }
+    //     if (!isValid) {
+    //         throw new IllegalArgumentException("Invalid file type for resource type: " + type);
+    //     }
+    // }
 
     private void validateCourseSession(Long courseSessionId, Long lecturerId) {
         try {
@@ -209,7 +237,11 @@ public class ResourceServiceImpl implements ResourceService {
             }
 
             // Validate lecturer's permission for the course session
+
             if (!courseServiceClient.validateLecturerForCourseSession(lecturerId, courseSessionId)) {
+                System.out.println("lecturerId: " + lecturerId);
+                System.out.println("courseSessionId: " + courseSessionId);
+                System.out.println("#####################################################################################################################");
                 throw new UnauthorizedAccessException("Lecturer is not authorized for this course session");
             }
         } catch (FeignException e) {
@@ -221,4 +253,4 @@ public class ResourceServiceImpl implements ResourceService {
             throw new RuntimeException("Error validating course session", e);
         }
     }
-} 
+}

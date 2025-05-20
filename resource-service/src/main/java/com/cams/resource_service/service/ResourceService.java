@@ -51,12 +51,17 @@ public interface ResourceService {
                                   List<String> categories);
 
     /**
+     * Get file content for a resource
+     */
+    byte[] getFileContent(ResourceMaterial resource);
+
+    /**
      * Delete a resource (soft delete)
      */
     void deleteResource(Long id);
 
     /**
-     * Increment download count for a resource
+     * Increment the download count for a resource
      */
     void incrementDownloadCount(Long id);
 

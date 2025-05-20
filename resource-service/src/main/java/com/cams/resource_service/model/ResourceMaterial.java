@@ -63,6 +63,8 @@ public class ResourceMaterial {
 
     @Column(nullable = false)
     private Long uploadedBy;
+    
+    private String originalFileName;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
