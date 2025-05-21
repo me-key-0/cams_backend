@@ -40,6 +40,7 @@ public class UserService implements com.cams.user_service.service.UserService {
         user.setEmail(userDto.getEmail());
         // Hash the password before saving
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        
 
         return userRepository.save(user);
     }
@@ -81,7 +82,7 @@ public class UserService implements com.cams.user_service.service.UserService {
             return null;
         }
         User user = userOpt.get();
-        UserResponse response = new UserResponse(user.getId(), user.getEmail(),user.getPassword(), user.getFirstname(), user.getLastname(), user.getRole(), user.getProfileImage(), user.isVerified());
+        UserResponse response = new UserResponse(user.getId(),user.getDepartment().getId(), user.getEmail(),user.getPassword(), user.getFirstname(), user.getLastname(), user.getRole(), user.getProfileImage(), user.isVerified());
         
         return response;
     }

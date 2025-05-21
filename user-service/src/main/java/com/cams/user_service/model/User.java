@@ -27,6 +27,10 @@ public class User {
     private String profileImage;
     private boolean isVerified;
 
+    @ManyToOne
+    @JoinColumn(name = "department_id")
+    private Department department;
+
     @OneToOne(mappedBy = "user")
     private Student student;
 

@@ -75,8 +75,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                     .header("X-User-Id", claims.getSubject())
                     .header("X-User-Role", String.valueOf(claims.get("role")))
+                    .header("X-User-Department", String.valueOf(claims.get("department")))
                     .build();
+                log.info("Request-Being-Sent", mutatedRequest);
             return chain.filter(exchange.mutate().request(mutatedRequest).build());
+            
         } catch (Exception e) {
             log.error("Token validation failed: {}", e.getMessage());
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);

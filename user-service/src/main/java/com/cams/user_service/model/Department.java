@@ -21,6 +21,9 @@ public class Department {
     private String name;
     private Integer years;
 
+    @OneToMany(mappedBy = "department")
+    private List<User> users;
+
     @ManyToOne
     @JoinColumn(name = "college_id")
     private College college;

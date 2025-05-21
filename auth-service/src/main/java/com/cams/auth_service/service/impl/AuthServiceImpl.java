@@ -51,6 +51,7 @@ public class AuthServiceImpl implements AuthService {
         String token = jwtTokenProvider.generateToken(
             userResponse.getId(),
             userResponse.getEmail(),
+            userResponse.getDepartmentId(),
             userResponse.getRole()
         );
         log.debug("JWT token generated successfully for user: {}", loginRequest.getEmail());
