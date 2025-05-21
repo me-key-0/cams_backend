@@ -36,9 +36,8 @@ spring:
         - id: communication-service
           uri: lb://communication-service
           predicates:
-            - Path=/api/communications/**
-          filters:
-            - StripPrefix=1
+            - Path=/api/com/**
+          
   security:
     jwt:
       secret: ${JWT_SECRET:5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437}
