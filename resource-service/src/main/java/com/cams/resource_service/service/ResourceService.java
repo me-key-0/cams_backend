@@ -1,72 +1,43 @@
 package com.cams.resource_service.service;
 
-import com.cams.resource_service.model.ResourceMaterial;
+import com.cams.resource_service.dto.ResourceResponse;
+import com.cams.resource_service.dto.ResourceStatsResponse;
+import com.cams.resource_service.dto.UpdateResourceRequest;
 import com.cams.resource_service.model.enums.ResourceType;
+import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Optional;
 
-/**
- * Service interface for managing resource materials.
- */
 public interface ResourceService {
     
-    /**
-     * Upload a new resource material
-     */
-    ResourceMaterial uploadResource(MultipartFile file, String title, String description, 
-                                  ResourceType type, Long courseSessionId, Long uploadedBy,
-                                  List<String> categories);
-
-    /**
-     * Get a resource by its ID
-     */
-    Optional<ResourceMaterial> getResourceById(Long id);
-
-    /**
-     * Get all resources for a course session
-     */
-    List<ResourceMaterial> getResourcesByCourseSession(Long courseSessionId);
-
-    /**
-     * Get resources by type for a course session
-     */
-    List<ResourceMaterial> getResourcesByType(Long courseSessionId, ResourceType type);
-
-    /**
-     * Get resources by category for a course session
-     */
-    List<ResourceMaterial> getResourcesByCategory(Long courseSessionId, String category);
-
-    /**
-     * Search resources by title or description
-     */
-    List<ResourceMaterial> searchResources(Long courseSessionId, String searchTerm);
-
-    /**
-     * Update resource details
-     */
-    ResourceMaterial updateResource(Long id, String title, String description, 
-                                  List<String> categories);
-
-    /**
-     * Get file content for a resource
-     */
-    byte[] getFileContent(ResourceMaterial resource);
-
-    /**
-     * Delete a resource (soft delete)
-     */
-    void deleteResource(Long id);
-
-    /**
-     * Increment the download count for a resource
-     */
-    void incrementDownloadCount(Long id);
-
-    /**
-     * Get all resources uploaded by a specific user
-     */
-    List<ResourceMaterial> getResourcesByUploader(Long uploadedBy);
-} 
+    // Upload operations
+    ResourceResponse uploadFile(MultipartFile file, String title, String description, 
+                               ResourceType type, Long courseSessionId, Long uploadedBy, 
+                               String uploaderName, List<String> categories);
+    
+    ResourceResponse createLink(String title, String description, String linkUrl,
+                               Long courseSessionId, Long uploadedBy, String uploaderName,
+                               List<String> categories);
+    
+    // Retrieval operations
+    ResourceResponse getResourceById(Long id);
+    List<ResourceResponse> getResourcesByCourseSession(Long courseSessionId);
+    ResourceStatsResponse getResourcesStatsByCourseSession(Long courseSessionId);
+    List<ResourceResponse> getResourcesByType(Long courseSessionId, ResourceType type);
+    List<ResourceResponse> getResourcesByCategory(Long courseSessionId, String category);
+    List<ResourceResponse> searchResources(Long courseSessionId, String searchTerm);
+    List<ResourceResponse> getResourcesByUploader(Long uploadedBy);
+    
+    // Download operations
+    Resource downloadResource(Long resourceId);
+    void incrementDownloadCount(Long resourceId);
+    
+    // Management operations
+    ResourceResponse updateResource(Long id, UpdateResourceRequest request, Long updatedBy);
+    void deleteResource(Long id, Long deletedBy);
+    
+    // Validation
+    boolean canAccessResource(Long resourceId, Long userId, String userRole);
+    boolean canManageResource(Long resourceId, Long userId);
+}
