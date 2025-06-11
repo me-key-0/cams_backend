@@ -13,8 +13,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,6 +33,41 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     @Override
     @Transactional
+    public AssignmentResponse createAssignmentWithFiles(AssignmentCreateRequest request, List<MultipartFile> files, 
+                                                       Long lecturerId, String lecturerName) {
+        // Validate course session exists and lecturer has access
+        validateLecturerAccess(lecturerId, request.getCourseSessionId());
+        
+        List<Long> attachmentIds = new ArrayList<>();
+        
+        // Upload files to resource service if provided
+        if (files != null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
+                try {
+                    ResourceDto resource = resourceServiceClient.uploadResource(
+                        file,
+                        file.getOriginalFilename(),
+                        "Assignment attachment for: " + request.getTitle(),
+                        "DOCUMENT",
+                        request.getCourseSessionId(),
+                        List.of("assignments", "attachments"),
+                        lecturerId.toString(),
+                        "LECTURER"
+                    );
+                    attachmentIds.add(resource.getId());
+                } catch (Exception e) {
+                    log.error("Failed to upload attachment: {}", file.getOriginalFilename(), e);
+                    throw new RuntimeException("Failed to upload attachment: " + file.getOriginalFilename());
+                }
+            }
+        }
+        
+        request.setAttachmentIds(attachmentIds);
+        return createAssignment(request, lecturerId, lecturerName);
+    }
+
+    @Override
+    @Transactional
     public AssignmentResponse createAssignment(AssignmentCreateRequest request, Long lecturerId, String lecturerName) {
         // Validate course session exists and lecturer has access
         validateLecturerAccess(lecturerId, request.getCourseSessionId());
@@ -43,7 +80,7 @@ public class AssignmentServiceImpl implements AssignmentService {
             .lecturerName(lecturerName)
             .dueDate(request.getDueDate())
             .maxScore(request.getMaxScore())
-            .type(request.getType())
+            .type(Assignment.AssignmentType.valueOf(request.getType().name()))
             .status(Assignment.AssignmentStatus.DRAFT)
             .attachmentIds(request.getAttachmentIds())
             .build();
@@ -56,6 +93,90 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     @Override
     @Transactional
+    public SubmissionResponse submitAssignmentWithFiles(SubmissionCreateRequest request, List<MultipartFile> files,
+                                                       Long studentId, String studentName) {
+        Assignment assignment = assignmentRepository.findById(request.getAssignmentId())
+            .orElseThrow(() -> new RuntimeException("Assignment not found"));
+        
+        if (assignment.getStatus() != Assignment.AssignmentStatus.PUBLISHED) {
+            throw new RuntimeException("Assignment is not available for submission");
+        }
+        
+        // Check if student already submitted
+        Optional<Submission> existingSubmission = submissionRepository.findByAssignmentIdAndStudentId(
+            request.getAssignmentId(), studentId);
+        
+        if (existingSubmission.isPresent()) {
+            throw new RuntimeException("Assignment already submitted");
+        }
+        
+        List<Long> attachmentIds = new ArrayList<>();
+        
+        // Upload files to resource service if provided
+        if (files != null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
+                try {
+                    ResourceDto resource = resourceServiceClient.uploadResource(
+                        file,
+                        file.getOriginalFilename(),
+                        "Submission for assignment: " + assignment.getTitle(),
+                        "DOCUMENT",
+                        assignment.getCourseSessionId(),
+                        List.of("submissions", "student-work"),
+                        studentId.toString(),
+                        "STUDENT"
+                    );
+                    attachmentIds.add(resource.getId());
+                } catch (Exception e) {
+                    log.error("Failed to upload submission file: {}", file.getOriginalFilename(), e);
+                    throw new RuntimeException("Failed to upload submission file: " + file.getOriginalFilename());
+                }
+            }
+        }
+        
+        request.setAttachmentIds(attachmentIds);
+        return submitAssignment(request, studentId, studentName);
+    }
+
+    @Override
+    @Transactional
+    public SubmissionResponse submitAssignment(SubmissionCreateRequest request, Long studentId, String studentName) {
+        Assignment assignment = assignmentRepository.findById(request.getAssignmentId())
+            .orElseThrow(() -> new RuntimeException("Assignment not found"));
+        
+        if (assignment.getStatus() != Assignment.AssignmentStatus.PUBLISHED) {
+            throw new RuntimeException("Assignment is not available for submission");
+        }
+        
+        // Check if student already submitted
+        Optional<Submission> existingSubmission = submissionRepository.findByAssignmentIdAndStudentId(
+            request.getAssignmentId(), studentId);
+        
+        if (existingSubmission.isPresent()) {
+            throw new RuntimeException("Assignment already submitted");
+        }
+        
+        boolean isLate = LocalDateTime.now().isAfter(assignment.getDueDate());
+        
+        Submission submission = Submission.builder()
+            .assignment(assignment)
+            .studentId(studentId)
+            .studentName(studentName)
+            .content(request.getContent())
+            .attachmentIds(request.getAttachmentIds())
+            .status(Submission.SubmissionStatus.SUBMITTED)
+            .isLate(isLate)
+            .maxScore(assignment.getMaxScore())
+            .build();
+        
+        Submission savedSubmission = submissionRepository.save(submission);
+        log.info("Assignment submitted: {} by student: {}", request.getAssignmentId(), studentId);
+        
+        return convertToSubmissionResponse(savedSubmission);
+    }
+
+    @Override
+    @Transactional
     public AssignmentResponse updateAssignment(Long id, AssignmentCreateRequest request, Long lecturerId) {
         Assignment assignment = getAssignmentByIdAndLecturer(id, lecturerId);
         
@@ -63,7 +184,7 @@ public class AssignmentServiceImpl implements AssignmentService {
         assignment.setDescription(request.getDescription());
         assignment.setDueDate(request.getDueDate());
         assignment.setMaxScore(request.getMaxScore());
-        assignment.setType(request.getType());
+        assignment.setType(Assignment.AssignmentType.valueOf(request.getType().name()));
         assignment.setAttachmentIds(request.getAttachmentIds());
         
         Assignment updatedAssignment = assignmentRepository.save(assignment);
@@ -176,43 +297,6 @@ public class AssignmentServiceImpl implements AssignmentService {
         Assignment updatedAssignment = assignmentRepository.save(assignment);
         log.info("Assignment closed: {} by lecturer: {}", id, lecturerId);
         return convertToResponse(updatedAssignment, lecturerId, "LECTURER");
-    }
-
-    @Override
-    @Transactional
-    public SubmissionResponse submitAssignment(SubmissionCreateRequest request, Long studentId, String studentName) {
-        Assignment assignment = assignmentRepository.findById(request.getAssignmentId())
-            .orElseThrow(() -> new RuntimeException("Assignment not found"));
-        
-        if (assignment.getStatus() != Assignment.AssignmentStatus.PUBLISHED) {
-            throw new RuntimeException("Assignment is not available for submission");
-        }
-        
-        // Check if student already submitted
-        Optional<Submission> existingSubmission = submissionRepository.findByAssignmentIdAndStudentId(
-            request.getAssignmentId(), studentId);
-        
-        if (existingSubmission.isPresent()) {
-            throw new RuntimeException("Assignment already submitted");
-        }
-        
-        boolean isLate = LocalDateTime.now().isAfter(assignment.getDueDate());
-        
-        Submission submission = Submission.builder()
-            .assignment(assignment)
-            .studentId(studentId)
-            .studentName(studentName)
-            .content(request.getContent())
-            .attachmentIds(request.getAttachmentIds())
-            .status(Submission.SubmissionStatus.SUBMITTED)
-            .isLate(isLate)
-            .maxScore(assignment.getMaxScore())
-            .build();
-        
-        Submission savedSubmission = submissionRepository.save(submission);
-        log.info("Assignment submitted: {} by student: {}", request.getAssignmentId(), studentId);
-        
-        return convertToSubmissionResponse(savedSubmission);
     }
 
     @Override

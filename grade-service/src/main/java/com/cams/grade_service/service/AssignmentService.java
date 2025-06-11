@@ -1,13 +1,15 @@
 package com.cams.grade_service.service;
 
 import com.cams.grade_service.dto.*;
-import com.cams.grade_service.model.Assignment;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface AssignmentService {
     
-    // Assignment management
+    // Assignment management with file upload
+    AssignmentResponse createAssignmentWithFiles(AssignmentCreateRequest request, List<MultipartFile> files, 
+                                               Long lecturerId, String lecturerName);
     AssignmentResponse createAssignment(AssignmentCreateRequest request, Long lecturerId, String lecturerName);
     AssignmentResponse updateAssignment(Long id, AssignmentCreateRequest request, Long lecturerId);
     void deleteAssignment(Long id, Long lecturerId);
@@ -22,7 +24,9 @@ public interface AssignmentService {
     AssignmentResponse publishAssignment(Long id, Long lecturerId);
     AssignmentResponse closeAssignment(Long id, Long lecturerId);
     
-    // Submission management
+    // Submission management with file upload
+    SubmissionResponse submitAssignmentWithFiles(SubmissionCreateRequest request, List<MultipartFile> files,
+                                               Long studentId, String studentName);
     SubmissionResponse submitAssignment(SubmissionCreateRequest request, Long studentId, String studentName);
     SubmissionResponse updateSubmission(Long submissionId, SubmissionCreateRequest request, Long studentId);
     void deleteSubmission(Long submissionId, Long studentId);

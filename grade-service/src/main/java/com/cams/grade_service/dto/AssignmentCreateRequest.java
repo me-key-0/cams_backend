@@ -1,6 +1,5 @@
 package com.cams.grade_service.dto;
 
-import com.cams.grade_service.model.Assignment;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -28,7 +27,11 @@ public class AssignmentCreateRequest {
     private Integer maxScore;
 
     @NotNull(message = "Assignment type is required")
-    private Assignment.AssignmentType type;
+    private AssignmentType type;
 
     private List<Long> attachmentIds; // Resource IDs
+
+    public enum AssignmentType {
+        INDIVIDUAL, GROUP
+    }
 }

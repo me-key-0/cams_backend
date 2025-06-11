@@ -5,9 +5,12 @@ import com.cams.grade_service.service.AssignmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -18,9 +21,15 @@ public class AssignmentController {
     private final AssignmentService assignmentService;
 
     // Assignment Management (Lecturer)
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<AssignmentResponse> createAssignment(
-            @Valid @RequestBody AssignmentCreateRequest request,
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam("courseSessionId") Long courseSessionId,
+            @RequestParam("dueDate") String dueDateStr,
+            @RequestParam("maxScore") Integer maxScore,
+            @RequestParam("type") String type,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files,
             @RequestHeader("X-User-Id") String lecturerId,
             @RequestHeader("X-User-Role") String role) {
         
@@ -28,8 +37,17 @@ public class AssignmentController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
+        AssignmentCreateRequest request = new AssignmentCreateRequest();
+        request.setTitle(title);
+        request.setDescription(description);
+        request.setCourseSessionId(courseSessionId);
+        request.setDueDate(LocalDateTime.parse(dueDateStr));
+        request.setMaxScore(maxScore);
+        request.setType(AssignmentCreateRequest.AssignmentType.valueOf(type));
+        
         String lecturerName = "Lecturer " + lecturerId; // Should be fetched from user service
-        AssignmentResponse assignment = assignmentService.createAssignment(request, Long.parseLong(lecturerId), lecturerName);
+        AssignmentResponse assignment = assignmentService.createAssignmentWithFiles(
+            request, files, Long.parseLong(lecturerId), lecturerName);
         return ResponseEntity.status(HttpStatus.CREATED).body(assignment);
     }
 
@@ -139,9 +157,11 @@ public class AssignmentController {
     }
 
     // Submission Management (Student)
-    @PostMapping("/submit")
+    @PostMapping(value = "/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<SubmissionResponse> submitAssignment(
-            @Valid @RequestBody SubmissionCreateRequest request,
+            @RequestParam("assignmentId") Long assignmentId,
+            @RequestParam(value = "content", required = false) String content,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files,
             @RequestHeader("X-User-Id") String studentId,
             @RequestHeader("X-User-Role") String role) {
         
@@ -149,8 +169,13 @@ public class AssignmentController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
+        SubmissionCreateRequest request = new SubmissionCreateRequest();
+        request.setAssignmentId(assignmentId);
+        request.setContent(content);
+        
         String studentName = "Student " + studentId; // Should be fetched from user service
-        SubmissionResponse submission = assignmentService.submitAssignment(request, Long.parseLong(studentId), studentName);
+        SubmissionResponse submission = assignmentService.submitAssignmentWithFiles(
+            request, files, Long.parseLong(studentId), studentName);
         return ResponseEntity.status(HttpStatus.CREATED).body(submission);
     }
 
