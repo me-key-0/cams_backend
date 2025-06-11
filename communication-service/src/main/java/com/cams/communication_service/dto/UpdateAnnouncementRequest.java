@@ -4,9 +4,8 @@ import com.cams.communication_service.model.Announcement;
 import lombok.Data;
 
 @Data
-public class CreateAnnouncementRequest {
+public class UpdateAnnouncementRequest {
     private String title;
     private String content;
     private Announcement.Category category;
-    private String departmentCode; // Only for department-specific announcements
 }
