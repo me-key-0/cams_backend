@@ -1,7 +1,6 @@
 package com.cams.grade_service.service.impl;
 
 import com.cams.grade_service.client.CourseServiceClient;
-import com.cams.grade_service.client.CourseSessionDto;
 import com.cams.grade_service.client.ResourceDto;
 import com.cams.grade_service.client.ResourceServiceClient;
 import com.cams.grade_service.dto.*;

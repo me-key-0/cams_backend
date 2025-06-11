@@ -3,7 +3,6 @@ package com.cams.grade_service.dto;
 import lombok.Data;
 
 @Data
-
 public class CourseSessionDto {
     private Long id;
     private Integer year;
@@ -18,4 +17,3 @@ public class CourseSessionDto {
         private Integer creditHour;
     }
 }
-
