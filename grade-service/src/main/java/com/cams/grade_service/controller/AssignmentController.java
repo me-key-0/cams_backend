@@ -2,7 +2,6 @@ package com.cams.grade_service.controller;
 
 import com.cams.grade_service.dto.*;
 import com.cams.grade_service.service.AssignmentService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -54,7 +53,7 @@ public class AssignmentController {
     @PutMapping("/{id}")
     public ResponseEntity<AssignmentResponse> updateAssignment(
             @PathVariable Long id,
-            @Valid @RequestBody AssignmentCreateRequest request,
+            @RequestBody AssignmentCreateRequest request,
             @RequestHeader("X-User-Id") String lecturerId,
             @RequestHeader("X-User-Role") String role) {
         
@@ -182,7 +181,7 @@ public class AssignmentController {
     @PutMapping("/submissions/{submissionId}")
     public ResponseEntity<SubmissionResponse> updateSubmission(
             @PathVariable Long submissionId,
-            @Valid @RequestBody SubmissionCreateRequest request,
+            @RequestBody SubmissionCreateRequest request,
             @RequestHeader("X-User-Id") String studentId,
             @RequestHeader("X-User-Role") String role) {
         
@@ -256,7 +255,7 @@ public class AssignmentController {
     @PostMapping("/submissions/{submissionId}/grade")
     public ResponseEntity<SubmissionResponse> gradeSubmission(
             @PathVariable Long submissionId,
-            @Valid @RequestBody GradeSubmissionRequest request,
+            @RequestBody GradeSubmissionRequest request,
             @RequestHeader("X-User-Id") String lecturerId,
             @RequestHeader("X-User-Role") String role) {
         
