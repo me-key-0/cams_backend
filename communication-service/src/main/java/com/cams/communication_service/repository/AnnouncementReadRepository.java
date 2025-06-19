@@ -1,5 +1,6 @@
 package com.cams.communication_service.repository;
 
+import com.cams.communication_service.model.Announcement;
 import com.cams.communication_service.model.AnnouncementRead;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
