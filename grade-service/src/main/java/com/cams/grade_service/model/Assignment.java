@@ -59,6 +59,9 @@ public class Assignment {
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Submission> submissions;
 
+    // For group assignments
+    private Boolean isGroupAssignment;
+
     public enum AssignmentType {
         INDIVIDUAL, GROUP
     }
@@ -72,6 +75,9 @@ public class Assignment {
         createdAt = LocalDateTime.now();
         if (status == null) {
             status = AssignmentStatus.DRAFT;
+        }
+        if (isGroupAssignment == null) {
+            isGroupAssignment = (type == AssignmentType.GROUP);
         }
     }
 }
