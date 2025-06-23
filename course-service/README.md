@@ -147,44 +147,30 @@ mvn spring-boot:run
 }
 ```
 
+#### Update Batch
+**PUT** `/api/batches/{id}`
+
+**Headers:**
+- `X-User-Id`: Admin ID
+- `X-User-Role`: ADMIN, SUPER_ADMIN
+
+**Request Body:** Same as create batch
+
+#### Delete Batch
+**DELETE** `/api/batches/{id}`
+
+**Headers:**
+- `X-User-Id`: Admin ID
+- `X-User-Role`: ADMIN, SUPER_ADMIN
+
+#### Get Batch by ID
+**GET** `/api/batches/{id}`
+
 #### Get Batches by Department
 **GET** `/api/batches/department/{departmentId}`
 
 **Headers:**
 - `X-User-Role`: ADMIN, SUPER_ADMIN
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "CS-2024-Batch-1",
-    "admissionYear": 2024,
-    "currentYear": 1,
-    "currentSemester": 1,
-    "departmentId": 1,
-    "createdAt": "2024-01-15T10:30:00",
-    "isActive": true,
-    "courseAssignments": [
-      {
-        "id": 1,
-        "batchId": 1,
-        "batchName": "CS-2024-Batch-1",
-        "courseId": 1,
-        "courseCode": "CS101",
-        "courseName": "Introduction to Computer Science",
-        "creditHour": 3,
-        "year": 1,
-        "semester": 1,
-        "assignedBy": 123,
-        "assignedAt": "2024-01-15T10:35:00",
-        "isActive": true
-      }
-    ],
-    "totalStudents": 25
-  }
-]
-```
 
 #### Assign Courses to Batch
 **POST** `/api/batches/course-assignments`
@@ -246,6 +232,16 @@ mvn spring-boot:run
 ]
 ```
 
+#### Get Course Assignments for Batch
+**GET** `/api/batches/{batchId}/course-assignments`
+
+#### Remove Course Assignment
+**DELETE** `/api/batches/course-assignments/{assignmentId}`
+
+**Headers:**
+- `X-User-Id`: Admin ID
+- `X-User-Role`: ADMIN, SUPER_ADMIN
+
 #### Advance Batch Semester
 **POST** `/api/batches/{batchId}/advance-semester`
 
@@ -253,21 +249,13 @@ mvn spring-boot:run
 - `X-User-Id`: Admin ID
 - `X-User-Role`: ADMIN, SUPER_ADMIN
 
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "CS-2024-Batch-1",
-  "admissionYear": 2024,
-  "currentYear": 1,
-  "currentSemester": 2,
-  "departmentId": 1,
-  "createdAt": "2024-01-15T10:30:00",
-  "isActive": true,
-  "courseAssignments": [],
-  "totalStudents": 25
-}
-```
+#### Validate Credit Hours
+**GET** `/api/batches/{batchId}/validate-credit-hours`
+
+**Query Parameters:**
+- `year`: Academic year
+- `semester`: Semester number
+- `courseIds`: List of course IDs
 
 ### Course Session Management
 
@@ -286,7 +274,8 @@ mvn spring-boot:run
   "year": 1,
   "courseId": 1,
   "departmentId": 1,
-  "lecturerIds": [123, 456]
+  "lecturerIds": [123, 456],
+  "batchId": 1
 }
 ```
 
@@ -321,9 +310,39 @@ mvn spring-boot:run
   "createdAt": "2024-01-15T10:40:00",
   "activatedAt": null,
   "createdBy": 789,
-  "enrolledStudents": 0
+  "enrolledStudents": 0,
+  "batchId": 1,
+  "batchName": "CS-2024-Batch-1"
 }
 ```
+
+#### Update Course Session
+**PUT** `/api/course-sessions/{id}`
+
+**Headers:**
+- `X-User-Id`: Admin ID
+- `X-User-Role`: ADMIN, SUPER_ADMIN
+
+**Request Body:** Same as create course session
+
+#### Delete Course Session
+**DELETE** `/api/course-sessions/{id}`
+
+**Headers:**
+- `X-User-Id`: Admin ID
+- `X-User-Role`: ADMIN, SUPER_ADMIN
+
+#### Get Course Session by ID
+**GET** `/api/course-sessions/{id}`
+
+#### Get Course Sessions by Department
+**GET** `/api/course-sessions/department/{departmentId}`
+
+#### Get Course Sessions by Batch
+**GET** `/api/course-sessions/batch/{batchId}`
+
+#### Get Course Sessions by Batch, Year, and Semester
+**GET** `/api/course-sessions/batch/{batchId}/year/{year}/semester/{semester}`
 
 #### Activate Course Session
 **POST** `/api/course-sessions/{id}/activate`
@@ -332,40 +351,12 @@ mvn spring-boot:run
 - `X-User-Id`: Admin ID
 - `X-User-Role`: ADMIN, SUPER_ADMIN
 
-**Response:**
-```json
-{
-  "id": 1,
-  "academicYear": 2024,
-  "semester": 1,
-  "year": 1,
-  "course": {
-    "name": "Introduction to Computer Science",
-    "code": "CS101",
-    "creditHour": 3
-  },
-  "departmentId": 1,
-  "lecturers": [
-    {
-      "id": 123,
-      "name": "Dr. Jane Smith",
-      "email": "jane.smith@example.com"
-    },
-    {
-      "id": 456,
-      "name": "Dr. John Doe",
-      "email": "john.doe@example.com"
-    }
-  ],
-  "status": "ACTIVE",
-  "isActive": true,
-  "enrollmentOpen": false,
-  "createdAt": "2024-01-15T10:40:00",
-  "activatedAt": "2024-01-15T10:45:00",
-  "createdBy": 789,
-  "enrolledStudents": 0
-}
-```
+#### Deactivate Course Session
+**POST** `/api/course-sessions/{id}/deactivate`
+
+**Headers:**
+- `X-User-Id`: Admin ID
+- `X-User-Role`: ADMIN, SUPER_ADMIN
 
 #### Open Enrollment
 **POST** `/api/course-sessions/{id}/open-enrollment`
@@ -374,40 +365,38 @@ mvn spring-boot:run
 - `X-User-Id`: Admin ID
 - `X-User-Role`: ADMIN, SUPER_ADMIN
 
-**Response:**
+#### Close Enrollment
+**POST** `/api/course-sessions/{id}/close-enrollment`
+
+**Headers:**
+- `X-User-Id`: Admin ID
+- `X-User-Role`: ADMIN, SUPER_ADMIN
+
+#### Assign Lecturers
+**POST** `/api/course-sessions/{id}/lecturers`
+
+**Headers:**
+- `X-User-Id`: Admin ID
+- `X-User-Role`: ADMIN, SUPER_ADMIN
+
+**Request Body:**
 ```json
-{
-  "id": 1,
-  "academicYear": 2024,
-  "semester": 1,
-  "year": 1,
-  "course": {
-    "name": "Introduction to Computer Science",
-    "code": "CS101",
-    "creditHour": 3
-  },
-  "departmentId": 1,
-  "lecturers": [
-    {
-      "id": 123,
-      "name": "Dr. Jane Smith",
-      "email": "jane.smith@example.com"
-    },
-    {
-      "id": 456,
-      "name": "Dr. John Doe",
-      "email": "john.doe@example.com"
-    }
-  ],
-  "status": "ACTIVE",
-  "isActive": true,
-  "enrollmentOpen": true,
-  "createdAt": "2024-01-15T10:40:00",
-  "activatedAt": "2024-01-15T10:45:00",
-  "createdBy": 789,
-  "enrolledStudents": 0
-}
+[123, 456]
 ```
+
+#### Remove Lecturer
+**DELETE** `/api/course-sessions/{id}/lecturers/{lecturerId}`
+
+**Headers:**
+- `X-User-Id`: Admin ID
+- `X-User-Role`: ADMIN, SUPER_ADMIN
+
+#### Validate Lecturer Capacity
+**GET** `/api/course-sessions/validate-lecturer-capacity`
+
+**Query Parameters:**
+- `lecturerId`: Lecturer ID
+- `courseId`: Course ID
 
 ### Lecturer Management
 
@@ -427,19 +416,14 @@ mvn spring-boot:run
 }
 ```
 
-**Response:**
-```json
-{
-  "id": 1,
-  "lecturerId": 123,
-  "lecturerName": "Dr. Jane Smith",
-  "departmentId": 1,
-  "maxCreditHours": 12,
-  "currentCreditHours": 0,
-  "availableCreditHours": 12,
-  "isActive": true
-}
-```
+#### Get Lecturer Capacity
+**GET** `/api/lecturer-management/capacity/{lecturerId}`
+
+#### Get Lecturer Capacities by Department
+**GET** `/api/lecturer-management/capacity/department/{departmentId}`
+
+**Headers:**
+- `X-User-Role`: ADMIN, SUPER_ADMIN, LECTURER
 
 #### Assign Teachable Courses
 **POST** `/api/lecturer-management/teachable-courses`
@@ -456,26 +440,29 @@ mvn spring-boot:run
 }
 ```
 
-**Response:**
-```json
-[
-  {
-    "name": "Introduction to Computer Science",
-    "code": "CS101",
-    "creditHour": 3
-  },
-  {
-    "name": "Programming Fundamentals",
-    "code": "CS102",
-    "creditHour": 4
-  },
-  {
-    "name": "Data Structures",
-    "code": "CS201",
-    "creditHour": 3
-  }
-]
-```
+#### Get Teachable Courses
+**GET** `/api/lecturer-management/teachable-courses/{lecturerId}`
+
+#### Remove Teachable Course
+**DELETE** `/api/lecturer-management/teachable-courses/{lecturerId}/{courseId}`
+
+**Headers:**
+- `X-User-Id`: Admin ID
+- `X-User-Role`: ADMIN, SUPER_ADMIN
+
+#### Validate Lecturer for Course
+**GET** `/api/lecturer-management/validate-lecturer-course`
+
+**Query Parameters:**
+- `lecturerId`: Lecturer ID
+- `courseId`: Course ID
+
+#### Validate Lecturer Department
+**GET** `/api/lecturer-management/validate-lecturer-department`
+
+**Query Parameters:**
+- `lecturerId`: Lecturer ID
+- `departmentId`: Department ID
 
 ### Enrollment Management
 
@@ -483,8 +470,8 @@ mvn spring-boot:run
 **POST** `/api/enrollment/enroll`
 
 **Headers:**
-- `X-User-Id`: Student ID
-- `X-User-Role`: STUDENT
+- `X-User-Id`: User ID (must match studentId for STUDENT role)
+- `X-User-Role`: STUDENT, ADMIN, SUPER_ADMIN
 
 **Query Parameters:**
 - `studentId`: Student ID
@@ -512,6 +499,17 @@ mvn spring-boot:run
 }
 ```
 
+#### Unenroll Student
+**DELETE** `/api/enrollment/unenroll`
+
+**Headers:**
+- `X-User-Id`: User ID (must match studentId for STUDENT role)
+- `X-User-Role`: STUDENT, ADMIN, SUPER_ADMIN
+
+**Query Parameters:**
+- `studentId`: Student ID
+- `courseSessionId`: Course session ID
+
 #### Check Enrollment
 **GET** `/api/enrollment/check-enrollment`
 
@@ -533,6 +531,85 @@ true
 **Response:**
 ```json
 [456, 789, 101]
+```
+
+#### Get Student Course Sessions
+**GET** `/api/enrollment/sessions/{studentId}/{year}/{semester}/{academicYear}`
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "year": 2,
+    "semester": 1,
+    "academicYear": 2024,
+    "course": {
+      "code": "CS101",
+      "name": "Introduction to Computer Science",
+      "creditHour": 3
+    },
+    "lecturerName": "Dr. Jane Smith"
+  }
+]
+```
+
+#### Get Course Sessions by Student ID
+**GET** `/api/enrollment/student/{studentId}`
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "year": 2,
+    "semester": 1,
+    "academicYear": 2024,
+    "course": {
+      "code": "CS101",
+      "name": "Introduction to Computer Science",
+      "creditHour": 3
+    },
+    "lecturerName": "Dr. Jane Smith"
+  }
+]
+```
+
+### Assignment Management
+
+#### Get Lecturer Course Sessions
+**GET** `/api/assignment/sessions/{lectureId}`
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "academicYear": 2024,
+    "semester": 1,
+    "year": 2,
+    "course": {
+      "id": 1,
+      "code": "CS101",
+      "name": "Introduction to Computer Science",
+      "creditHour": 3
+    },
+    "status": "ACTIVE"
+  }
+]
+```
+
+#### Get Lecturer Course Sessions (Alternative)
+**GET** `/api/assignment/lecturer/{lecturerId}`
+
+**Response:** Same as above
+
+#### Validate Lecturer for Course Session
+**GET** `/api/assignment/lecturer/{lecturerId}/validate/{courseSessionId}`
+
+**Response:**
+```json
+true
 ```
 
 ## 🏗️ Data Models
@@ -599,6 +676,7 @@ public class CourseSession {
     private Boolean isActive;      // Admin can activate/deactivate
     private Boolean enrollmentOpen; // Controls if students can enroll
     private Long createdBy;        // Admin ID
+    private Batch batch;           // Reference to the batch
 }
 ```
 
@@ -663,6 +741,7 @@ public class Enrollment {
 - Multiple lecturer assignments
 - Session activation/deactivation
 - Enrollment control
+- Batch-specific course sessions for each semester
 
 ### Lecturer Management
 
@@ -728,6 +807,14 @@ curl -X POST http://localhost:8760/api/batches/course-assignments \
     ]
   }'
 
+# Get course sessions for a batch
+curl -X GET http://localhost:8760/api/course-sessions/batch/1 \
+  -H "X-User-Role: ADMIN"
+
+# Get course sessions for a specific semester in a batch
+curl -X GET http://localhost:8760/api/course-sessions/batch/1/year/1/semester/1 \
+  -H "X-User-Role: ADMIN"
+
 # Set lecturer capacity
 curl -X POST http://localhost:8760/api/lecturer-management/capacity \
   -H "Content-Type: application/json" \
@@ -760,7 +847,8 @@ curl -X POST http://localhost:8760/api/course-sessions \
     "year": 1,
     "courseId": 1,
     "departmentId": 1,
-    "lecturerIds": [456]
+    "lecturerIds": [456],
+    "batchId": 1
   }'
 
 # Activate course session
@@ -801,6 +889,7 @@ curl -X GET http://localhost:8760/api/enrollment/student/789 \
 - Batch → BatchCourseAssignment (One-to-Many)
 - Course → BatchCourseAssignment (One-to-Many)
 - Course → CourseSession (One-to-Many)
+- Batch → CourseSession (One-to-Many)
 - CourseSession → Enrollment (One-to-Many)
 - Course → LecturerTeachableCourse (One-to-Many)
 - Course → Prerequisites (Many-to-Many)

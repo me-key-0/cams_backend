@@ -53,6 +53,11 @@ public class CourseSession {
 
     @Column(nullable = false)
     private Long createdBy; // Admin ID who created this session
+    
+    // Reference to the batch this course session belongs to
+    @ManyToOne
+    @JoinColumn(name = "batch_id")
+    private Batch batch;
 
     @PrePersist
     protected void onCreate() {

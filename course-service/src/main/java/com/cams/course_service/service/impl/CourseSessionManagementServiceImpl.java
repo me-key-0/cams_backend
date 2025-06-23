@@ -3,9 +3,11 @@ package com.cams.course_service.service.impl;
 import com.cams.course_service.client.UserServiceClient;
 import com.cams.course_service.dto.*;
 import com.cams.course_service.model.Assignment;
+import com.cams.course_service.model.Batch;
 import com.cams.course_service.model.Course;
 import com.cams.course_service.model.CourseSession;
 import com.cams.course_service.model.LecturerCourseCapacity;
+import com.cams.course_service.repository.BatchRepository;
 import com.cams.course_service.repository.CourseRepository;
 import com.cams.course_service.repository.CourseSessionRepository;
 import com.cams.course_service.repository.EnrollmentRepository;
@@ -31,6 +33,7 @@ public class CourseSessionManagementServiceImpl implements CourseSessionManageme
     private final CourseRepository courseRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final LecturerCourseCapacityRepository lecturerCapacityRepository;
+    private final BatchRepository batchRepository;
     private final LecturerManagementService lecturerManagementService;
     private final UserServiceClient userServiceClient;
 
@@ -40,6 +43,18 @@ public class CourseSessionManagementServiceImpl implements CourseSessionManageme
         // Validate course exists
         Course course = courseRepository.findById(request.getCourseId())
             .orElseThrow(() -> new IllegalArgumentException("Course not found"));
+        
+        // Validate batch exists
+        Batch batch = null;
+        if (request.getBatchId() != null) {
+            batch = batchRepository.findById(request.getBatchId())
+                .orElseThrow(() -> new IllegalArgumentException("Batch not found"));
+            
+            // Validate batch belongs to the same department
+            if (!batch.getDepartmentId().equals(request.getDepartmentId())) {
+                throw new IllegalArgumentException("Batch does not belong to the specified department");
+            }
+        }
         
         // Validate department access
         validateDepartmentAccess(adminId, request.getDepartmentId());
@@ -65,6 +80,7 @@ public class CourseSessionManagementServiceImpl implements CourseSessionManageme
         courseSession.setIsActive(false);
         courseSession.setEnrollmentOpen(false);
         courseSession.setCreatedBy(adminId);
+        courseSession.setBatch(batch);
         
         CourseSession savedSession = courseSessionRepository.save(courseSession);
         log.info("Course session created: {} by admin: {}", savedSession.getId(), adminId);
@@ -85,6 +101,21 @@ public class CourseSessionManagementServiceImpl implements CourseSessionManageme
         
         // Validate department access
         validateDepartmentAccess(adminId, courseSession.getDepartmentId());
+        
+        // If batch is being changed, validate new batch
+        if (request.getBatchId() != null && 
+            (courseSession.getBatch() == null || !courseSession.getBatch().getId().equals(request.getBatchId()))) {
+            
+            Batch newBatch = batchRepository.findById(request.getBatchId())
+                .orElseThrow(() -> new IllegalArgumentException("Batch not found"));
+            
+            // Validate batch belongs to the same department
+            if (!newBatch.getDepartmentId().equals(request.getDepartmentId())) {
+                throw new IllegalArgumentException("Batch does not belong to the specified department");
+            }
+            
+            courseSession.setBatch(newBatch);
+        }
         
         // If course is being changed, validate new course
         if (!courseSession.getCourse().getId().equals(request.getCourseId())) {
@@ -177,6 +208,22 @@ public class CourseSessionManagementServiceImpl implements CourseSessionManageme
             .filter(session -> session.getDepartmentId().equals(departmentId))
             .collect(Collectors.toList());
         
+        return sessions.stream()
+            .map(this::convertToCourseSessionResponse)
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<CourseSessionResponse> getCourseSessionsByBatch(Long batchId) {
+        List<CourseSession> sessions = courseSessionRepository.findByBatchId(batchId);
+        return sessions.stream()
+            .map(this::convertToCourseSessionResponse)
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<CourseSessionResponse> getCourseSessionsByBatchAndSemester(Long batchId, Integer year, Integer semester) {
+        List<CourseSession> sessions = courseSessionRepository.findByBatchIdAndYearAndSemester(batchId, year, semester);
         return sessions.stream()
             .map(this::convertToCourseSessionResponse)
             .collect(Collectors.toList());
@@ -365,6 +412,12 @@ public class CourseSessionManagementServiceImpl implements CourseSessionManageme
         response.setCreatedAt(session.getCreatedAt());
         response.setActivatedAt(session.getActivatedAt());
         response.setCreatedBy(session.getCreatedBy());
+        
+        // Set batch information if available
+        if (session.getBatch() != null) {
+            response.setBatchId(session.getBatch().getId());
+            response.setBatchName(session.getBatch().getName());
+        }
         
         // Get enrolled students count
         int enrolledStudents = enrollmentRepository.findByCourseSessionId(session.getId()).size();
