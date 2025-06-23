@@ -38,14 +38,14 @@ public class RoleAuthorizationFilter implements Filter {
         String key = method + ":" + path;
         String userRole = httpRequest.getHeader("X-User-Role");
 
-        if (ENDPOINT_ROLE_MAP.containsKey(key)) {
-            Set<String> allowedRoles = ENDPOINT_ROLE_MAP.get(key);
-            if (userRole == null || !allowedRoles.contains(userRole)) {
-                httpResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                httpResponse.getWriter().write("Forbidden: Insufficient role");
-                return;
-            }
-        }
+        // if (ENDPOINT_ROLE_MAP.containsKey(key)) {
+        //     Set<String> allowedRoles = ENDPOINT_ROLE_MAP.get(key);
+        //     if (userRole == null || !allowedRoles.contains(userRole)) {
+        //         httpResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        //         httpResponse.getWriter().write("Forbidden: Insufficient role");
+        //         return;
+        //     }
+        // }
         chain.doFilter(request, response);
     }
 } 

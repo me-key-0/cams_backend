@@ -20,7 +20,7 @@ public class RoleAuthorizationFilter implements Filter {
     private static final Map<String, Set<String>> ENDPOINT_ROLE_MAP = new HashMap<>();
     static {
         // Example: Only LECTURER and ADMIN can POST resources
-        ENDPOINT_ROLE_MAP.put("POST:/api/v1/resources", Set.of("LECTURER", "ADMIN"));
+        ENDPOINT_ROLE_MAP.put("POST:/api/v1/resources", Set.of("LECTURER","STUDENT", "ADMIN"));
         // Example: Only ADMIN can DELETE resources
         ENDPOINT_ROLE_MAP.put("DELETE:/api/v1/resources", Set.of("ADMIN"));
         // Example: All roles can GET resources

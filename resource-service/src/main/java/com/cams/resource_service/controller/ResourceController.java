@@ -37,9 +37,9 @@ public class ResourceController {
             @RequestHeader("X-User-Id") String uploaderId,
             @RequestHeader("X-User-Role") String role) {
         
-        if (!"LECTURER".equals(role)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        // if (!"LECTURER".equals(role)) {
+        //     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        // }
         
         // For demo purposes, using uploaderId as uploaderName
         String uploaderName = "Lecturer " + uploaderId; // Should be fetched from user service

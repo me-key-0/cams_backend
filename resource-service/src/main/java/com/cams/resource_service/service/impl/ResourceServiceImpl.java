@@ -46,7 +46,7 @@ public class ResourceServiceImpl implements ResourceService {
                                      String uploaderName, List<String> categories) {
         
         // Validate course session and lecturer authorization
-        validateCourseSessionAccess(courseSessionId, uploadedBy);
+        // validateCourseSessionAccess(courseSessionId, uploadedBy);
         
         try {
             // Store file and get unique filename
