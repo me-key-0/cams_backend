@@ -56,6 +56,9 @@ public class Submission {
     private LocalDateTime gradedAt;
     private Long gradedBy; // Lecturer ID
 
+    // For group submissions
+    private Long groupId;
+
     public enum SubmissionStatus {
         PENDING, SUBMITTED, GRADED, RETURNED
     }

@@ -7,59 +7,53 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class GradeType {
+public class StudentGroup {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String name; // e.g., "Midterm Exam", "Quiz 1", "Final Exam"
+    private String name;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)
-    private Integer maxScore;
-
-    @Column(nullable = false)
-    private Double weightPercentage; // Weight in final grade calculation
-
-    @Column(nullable = false)
     private Long courseSessionId;
 
     @Column(nullable = false)
-    private Long createdBy; // Lecturer ID
+    private Long createdBy; // Can be lecturer or student
+
+    @Column(nullable = false)
+    private String createdByName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private GroupType type;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private GradeTypeCategory category;
-
-    @Column(nullable = false)
-    private Boolean isDefault; // Default grade types like midterm, final
-
     @Column(nullable = false)
     private Boolean isActive;
 
-    // For assignment-based grade types
-    private Long assignmentId;
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<GroupMember> members;
 
-    public enum GradeTypeCategory {
-        EXAM, QUIZ, ASSIGNMENT, PROJECT, PARTICIPATION, OTHER
+    public enum GroupType {
+        LECTURER_CREATED, STUDENT_CREATED
     }
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        if (isDefault == null) isDefault = false;
         if (isActive == null) isActive = true;
     }
 }
