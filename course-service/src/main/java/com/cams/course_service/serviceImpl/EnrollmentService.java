@@ -1,10 +1,13 @@
 package com.cams.course_service.serviceImpl;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.cams.course_service.client.UserServiceClient;
 import com.cams.course_service.dto.CourseDto;
@@ -12,6 +15,7 @@ import com.cams.course_service.dto.CourseSessionDto;
 import com.cams.course_service.dto.LecturerDto;
 import com.cams.course_service.model.CourseSession;
 import com.cams.course_service.model.Enrollment;
+import com.cams.course_service.repository.CourseSessionRepository;
 import com.cams.course_service.repository.EnrollmentRepository;
 
 @Service
@@ -19,6 +23,9 @@ public class EnrollmentService implements com.cams.course_service.service.Enroll
 
     @Autowired
     private EnrollmentRepository enrollmentRepository;
+
+    @Autowired
+    private CourseSessionRepository courseSessionRepository;
 
     @Autowired
     private UserServiceClient userServiceClient;
@@ -84,6 +91,73 @@ public class EnrollmentService implements com.cams.course_service.service.Enroll
             e.printStackTrace();
             throw e;
         }
+    }
+
+    @Override
+    @Transactional
+    public Enrollment enrollStudent(Long studentId, Long courseSessionId) {
+        // Check if course session exists and is active with enrollment open
+        CourseSession courseSession = courseSessionRepository.findById(courseSessionId)
+            .orElseThrow(() -> new IllegalArgumentException("Course session not found"));
+        
+        if (!courseSession.getIsActive()) {
+            throw new IllegalStateException("Course session is not active");
+        }
+        
+        if (!courseSession.getEnrollmentOpen()) {
+            throw new IllegalStateException("Enrollment is not open for this course session");
+        }
+        
+        // Check if student is already enrolled
+        Optional<Enrollment> existingEnrollment = enrollmentRepository.findAll().stream()
+            .filter(e -> e.getStudentId().equals(studentId) && 
+                   e.getCourseSession().getId().equals(courseSessionId))
+            .findFirst();
+        
+        if (existingEnrollment.isPresent()) {
+            throw new IllegalStateException("Student is already enrolled in this course session");
+        }
+        
+        // Create enrollment
+        Enrollment enrollment = new Enrollment();
+        enrollment.setStudentId(studentId);
+        enrollment.setCourseSession(courseSession);
+        enrollment.setEnrollmentDate(LocalDateTime.now().toString());
+        enrollment.setIsActive(true);
+        
+        return enrollmentRepository.save(enrollment);
+    }
+
+    @Override
+    @Transactional
+    public void unenrollStudent(Long studentId, Long courseSessionId) {
+        // Find enrollment
+        Optional<Enrollment> existingEnrollment = enrollmentRepository.findAll().stream()
+            .filter(e -> e.getStudentId().equals(studentId) && 
+                   e.getCourseSession().getId().equals(courseSessionId))
+            .findFirst();
+        
+        if (existingEnrollment.isEmpty()) {
+            throw new IllegalArgumentException("Student is not enrolled in this course session");
+        }
+        
+        // Delete enrollment
+        enrollmentRepository.delete(existingEnrollment.get());
+    }
+
+    @Override
+    public boolean isStudentEnrolled(Long studentId, Long courseSessionId) {
+        return enrollmentRepository.findAll().stream()
+            .anyMatch(e -> e.getStudentId().equals(studentId) && 
+                    e.getCourseSession().getId().equals(courseSessionId) &&
+                    e.getIsActive());
+    }
+
+    @Override
+    public List<Long> getEnrolledStudents(Long courseSessionId) {
+        return enrollmentRepository.findByCourseSessionId(courseSessionId).stream()
+            .map(Enrollment::getStudentId)
+            .collect(Collectors.toList());
     }
 
     private CourseSessionDto mapToDTO(CourseSession cs) {

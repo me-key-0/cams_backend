@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.cams.course_service.dto.CourseSessionDto;
+import com.cams.course_service.model.Enrollment;
 import com.cams.course_service.service.EnrollmentService;
 
 @RestController
@@ -43,5 +44,59 @@ public class EnrollmentController {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+    
+    @PostMapping("/enroll")
+    public ResponseEntity<Enrollment> enrollStudent(
+            @RequestParam Long studentId,
+            @RequestParam Long courseSessionId,
+            @RequestHeader("X-User-Id") String userId,
+            @RequestHeader("X-User-Role") String role) {
+        
+        // Students can only enroll themselves
+        if ("STUDENT".equals(role) && !userId.equals(studentId.toString())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        Enrollment enrollment = enrollmentService.enrollStudent(studentId, courseSessionId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(enrollment);
+    }
+    
+    @DeleteMapping("/unenroll")
+    public ResponseEntity<Void> unenrollStudent(
+            @RequestParam Long studentId,
+            @RequestParam Long courseSessionId,
+            @RequestHeader("X-User-Id") String userId,
+            @RequestHeader("X-User-Role") String role) {
+        
+        // Students can only unenroll themselves, admins can unenroll anyone
+        if ("STUDENT".equals(role) && !userId.equals(studentId.toString())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        enrollmentService.unenrollStudent(studentId, courseSessionId);
+        return ResponseEntity.noContent().build();
+    }
+    
+    @GetMapping("/check-enrollment")
+    public ResponseEntity<Boolean> checkEnrollment(
+            @RequestParam Long studentId,
+            @RequestParam Long courseSessionId) {
+        
+        boolean isEnrolled = enrollmentService.isStudentEnrolled(studentId, courseSessionId);
+        return ResponseEntity.ok(isEnrolled);
+    }
+    
+    @GetMapping("/course-session/{courseSessionId}/students")
+    public ResponseEntity<List<Long>> getEnrolledStudents(
+            @PathVariable Long courseSessionId,
+            @RequestHeader("X-User-Role") String role) {
+        
+        if (!"ADMIN".equals(role) && !"SUPER_ADMIN".equals(role) && !"LECTURER".equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        List<Long> studentIds = enrollmentService.getEnrolledStudents(courseSessionId);
+        return ResponseEntity.ok(studentIds);
     }
 }
