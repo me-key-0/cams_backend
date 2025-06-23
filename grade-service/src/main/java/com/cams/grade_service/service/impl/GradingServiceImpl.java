@@ -359,17 +359,27 @@ public class GradingServiceImpl implements GradingService {
         int completedAssessments = (int) assessments.stream().filter(a -> "graded".equals(a.getStatus())).count();
         int pendingAssessments = totalAssessments - completedAssessments;
         
-        // Calculate overall grade
-        double totalScore = 0.0;
-        double totalMaxScore = 0.0;
-        for (AssessmentItemResponse assessment : assessments) {
-            if (assessment.getScore() != null) {
-                totalScore += assessment.getScore();
-                totalMaxScore += assessment.getMaxScore();
+        // Calculate overall grade based on weighted grade types
+        List<GradeType> gradeTypes = gradeTypeRepository.findByCourseSessionIdAndIsActiveTrueOrderByCreatedAtAsc(courseSessionId);
+        List<StudentGrade> studentGrades = studentGradeRepository.findByStudentIdAndGradeType_CourseSessionId(studentId, courseSessionId);
+        
+        double totalWeightedScore = 0.0;
+        double totalWeight = 0.0;
+        
+        for (GradeType gradeType : gradeTypes) {
+            Optional<StudentGrade> gradeOpt = studentGrades.stream()
+                .filter(g -> g.getGradeType().getId().equals(gradeType.getId()))
+                .findFirst();
+            
+            if (gradeOpt.isPresent()) {
+                StudentGrade grade = gradeOpt.get();
+                double percentage = (grade.getScore() / gradeType.getMaxScore()) * 100;
+                totalWeightedScore += percentage * (gradeType.getWeightPercentage() / 100);
+                totalWeight += gradeType.getWeightPercentage();
             }
         }
         
-        double overallGrade = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0.0;
+        double overallGrade = totalWeight > 0 ? totalWeightedScore : 0.0;
         
         StudentAssessmentOverviewResponse response = new StudentAssessmentOverviewResponse();
         response.setCourseSessionId(courseSessionId);
@@ -389,75 +399,96 @@ public class GradingServiceImpl implements GradingService {
     public List<AssessmentItemResponse> getStudentAssessments(Long studentId, Long courseSessionId) {
         List<AssessmentItemResponse> assessments = new ArrayList<>();
         
-        // Get assignments
-        List<Assignment> assignments = assignmentRepository.findByCourseSessionIdAndStatusOrderByCreatedAtDesc(
-            courseSessionId, Assignment.AssignmentStatus.PUBLISHED);
+        // Get all grade types for this course session
+        List<GradeType> gradeTypes = gradeTypeRepository.findByCourseSessionIdAndIsActiveTrueOrderByCreatedAtAsc(courseSessionId);
         
-        for (Assignment assignment : assignments) {
+        // Get student's grades for all grade types
+        List<StudentGrade> studentGrades = studentGradeRepository.findByStudentIdAndGradeType_CourseSessionId(studentId, courseSessionId);
+        Map<Long, StudentGrade> gradesByTypeId = studentGrades.stream()
+            .collect(Collectors.toMap(g -> g.getGradeType().getId(), g -> g));
+        
+        // Process each grade type
+        for (GradeType gradeType : gradeTypes) {
             AssessmentItemResponse item = new AssessmentItemResponse();
-            item.setId(assignment.getId());
-            item.setTitle(assignment.getTitle());
-            item.setDescription(assignment.getDescription());
-            item.setType("ASSIGNMENT");
-            item.setDueDate(assignment.getDueDate());
-            item.setMaxScore(assignment.getMaxScore());
+            item.setId(gradeType.getId());
+            item.setTitle(gradeType.getName());
+            item.setDescription(gradeType.getDescription());
+            item.setType(gradeType.getCategory().name());
+            item.setMaxScore(gradeType.getMaxScore());
             
-            // Check submission status
-            Optional<Submission> submission = submissionRepository.findByAssignmentIdAndStudentId(assignment.getId(), studentId);
-            if (submission.isPresent()) {
-                Submission sub = submission.get();
-                item.setStatus(sub.getStatus().name().toLowerCase());
-                item.setScore(sub.getScore());
-                item.setFeedback(sub.getFeedback());
-                item.setIsLate(sub.isLate());
-                
-                if (sub.getScore() != null) {
-                    item.setGradeDisplay(sub.getScore() + "/" + assignment.getMaxScore());
+            // Check if this is an assignment-based grade type
+            if (gradeType.getAssignmentId() != null) {
+                // Handle assignment-based grade type
+                Optional<Assignment> assignmentOpt = assignmentRepository.findById(gradeType.getAssignmentId());
+                if (assignmentOpt.isPresent()) {
+                    Assignment assignment = assignmentOpt.get();
+                    item.setTitle(assignment.getTitle());
+                    item.setDescription(assignment.getDescription());
+                    item.setType("ASSIGNMENT");
+                    item.setDueDate(assignment.getDueDate());
+                    item.setOverdue(LocalDateTime.now().isAfter(assignment.getDueDate()));
+                    
+                    // Check submission status
+                    Optional<Submission> submission = submissionRepository.findByAssignmentIdAndStudentId(assignment.getId(), studentId);
+                    if (submission.isPresent()) {
+                        Submission sub = submission.get();
+                        item.setStatus(sub.getStatus().name().toLowerCase());
+                        item.setScore(sub.getScore());
+                        item.setFeedback(sub.getFeedback());
+                        item.setLate(sub.isLate());
+                        
+                        if (sub.getScore() != null) {
+                            item.setGradeDisplay(sub.getScore() + "/" + assignment.getMaxScore());
+                        } else {
+                            item.setGradeDisplay("submitted");
+                        }
+                    } else {
+                        item.setStatus("pending");
+                        item.setGradeDisplay("pending");
+                    }
+                    
+                    // Load attachments
+                    if (assignment.getAttachmentIds() != null && !assignment.getAttachmentIds().isEmpty()) {
+                        item.setAttachments(loadAttachmentInfo(assignment.getAttachmentIds()));
+                    }
                 }
             } else {
-                item.setStatus("pending");
-                item.setGradeDisplay("pending");
-            }
-            
-            item.setIsOverdue(LocalDateTime.now().isAfter(assignment.getDueDate()));
-            
-            // Load attachments
-            if (assignment.getAttachmentIds() != null && !assignment.getAttachmentIds().isEmpty()) {
-                item.setAttachments(loadAttachmentInfo(assignment.getAttachmentIds()));
+                // Handle non-assignment grade types (exams, quizzes, participation, etc.)
+                StudentGrade grade = gradesByTypeId.get(gradeType.getId());
+                
+                if (grade != null) {
+                    // Student has a grade for this type
+                    item.setStatus("graded");
+                    item.setScore(grade.getScore());
+                    item.setFeedback(grade.getFeedback());
+                    item.setGradeDisplay(grade.getScore() + "/" + gradeType.getMaxScore());
+                } else {
+                    // Student doesn't have a grade yet
+                    item.setStatus("pending");
+                    item.setGradeDisplay("pending");
+                }
+                
+                item.setLate(false);
+                item.setOverdue(false);
             }
             
             assessments.add(item);
         }
         
-        // Get other grade types (exams, quizzes, etc.)
-        List<StudentGrade> grades = studentGradeRepository.findByStudentIdAndGradeType_CourseSessionId(studentId, courseSessionId);
-        
-        for (StudentGrade grade : grades) {
-            // Skip assignment-based grades as they're already included above
-            if (grade.getGradeType().getAssignmentId() != null) continue;
-            
-            AssessmentItemResponse item = new AssessmentItemResponse();
-            item.setId(grade.getGradeType().getId());
-            item.setTitle(grade.getGradeType().getName());
-            item.setDescription(grade.getGradeType().getDescription());
-            item.setType(grade.getGradeType().getCategory().name());
-            item.setMaxScore(grade.getGradeType().getMaxScore());
-            item.setStatus("graded");
-            item.setScore(grade.getScore());
-            item.setFeedback(grade.getFeedback());
-            item.setGradeDisplay(grade.getScore() + "/" + grade.getGradeType().getMaxScore());
-            item.setIsLate(false);
-            item.setIsOverdue(false);
-            
-            assessments.add(item);
-        }
-        
+        // Sort assessments: assignments by due date (most recent first), then others by creation date
         return assessments.stream()
             .sorted((a, b) -> {
+                // Assignments with due dates first, sorted by due date (most recent first)
                 if (a.getDueDate() != null && b.getDueDate() != null) {
                     return b.getDueDate().compareTo(a.getDueDate());
+                } else if (a.getDueDate() != null) {
+                    return -1; // a has due date, b doesn't - a comes first
+                } else if (b.getDueDate() != null) {
+                    return 1; // b has due date, a doesn't - b comes first
+                } else {
+                    // Neither has due date, sort by title
+                    return a.getTitle().compareTo(b.getTitle());
                 }
-                return a.getTitle().compareTo(b.getTitle());
             })
             .collect(Collectors.toList());
     }
