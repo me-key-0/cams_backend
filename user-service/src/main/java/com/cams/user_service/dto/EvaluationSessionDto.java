@@ -1,31 +1,24 @@
-package com.cams.user_service.model;
+package com.cams.user_service.dto;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
-@Entity
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class EvaluationSession {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class EvaluationSessionDto {
     private Long id;
-
     private Long courseSessionId;
     private boolean isActive;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private Long departmentId;
-    private Long activatedBy; // Admin ID who activated the session
-
-    @OneToMany(mappedBy = "session")
-    private List<Evaluation> evaluations;
+    private Long activatedBy;
+    private String courseCode;
+    private String courseName;
 }

@@ -7,5 +7,6 @@ import java.util.List;
 @Data
 public class EvaluationRequestDto {
     private Long lecturerId;
+    private Long courseSessionId;
     private List<EvaluationAnswerDto> answers;
 }
