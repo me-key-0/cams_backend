@@ -426,7 +426,7 @@ public class GradingServiceImpl implements GradingService {
                     item.setDescription(assignment.getDescription());
                     item.setType("ASSIGNMENT");
                     item.setDueDate(assignment.getDueDate());
-                    item.setOverdue(LocalDateTime.now().isAfter(assignment.getDueDate()));
+                    item.setIsOverdue(LocalDateTime.now().isAfter(assignment.getDueDate()));
                     
                     // Check submission status
                     Optional<Submission> submission = submissionRepository.findByAssignmentIdAndStudentId(assignment.getId(), studentId);
@@ -435,7 +435,7 @@ public class GradingServiceImpl implements GradingService {
                         item.setStatus(sub.getStatus().name().toLowerCase());
                         item.setScore(sub.getScore());
                         item.setFeedback(sub.getFeedback());
-                        item.setLate(sub.isLate());
+                        item.setIsLate(sub.isLate());
                         
                         if (sub.getScore() != null) {
                             item.setGradeDisplay(sub.getScore() + "/" + assignment.getMaxScore());
@@ -468,8 +468,8 @@ public class GradingServiceImpl implements GradingService {
                     item.setGradeDisplay("pending");
                 }
                 
-                item.setLate(false);
-                item.setOverdue(false);
+                item.setIsLate(false);
+                item.setIsOverdue(false);
             }
             
             assessments.add(item);

@@ -7,7 +7,7 @@ spring:
         - id: course-service
           uri: lb://course-service
           predicates:
-            - Path=/api/courses/**, /api/enrollment/**, /api/assignment/**, /api/session/**
+            - Path=/api/courses/**, /api/enrollment/**, /api/assignment/**, /api/session/**, /api/batches/**, /api/*
 
         - id: auth-service
           uri: lb://auth-service
