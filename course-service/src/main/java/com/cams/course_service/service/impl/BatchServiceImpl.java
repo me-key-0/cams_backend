@@ -4,10 +4,13 @@ import com.cams.course_service.dto.*;
 import com.cams.course_service.model.Batch;
 import com.cams.course_service.model.BatchCourseAssignment;
 import com.cams.course_service.model.Course;
+import com.cams.course_service.model.CourseSession;
 import com.cams.course_service.repository.BatchCourseAssignmentRepository;
 import com.cams.course_service.repository.BatchRepository;
 import com.cams.course_service.repository.CourseRepository;
+import com.cams.course_service.repository.CourseSessionRepository;
 import com.cams.course_service.service.BatchService;
+import com.cams.course_service.service.CourseSessionManagementService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,8 @@ public class BatchServiceImpl implements BatchService {
     private final BatchRepository batchRepository;
     private final CourseRepository courseRepository;
     private final BatchCourseAssignmentRepository batchCourseAssignmentRepository;
+    private final CourseSessionRepository courseSessionRepository;
+    private final CourseSessionManagementService courseSessionService;
     
     // Maximum credit hours per semester
     private static final int MAX_CREDIT_HOURS_PER_SEMESTER = 24;
@@ -155,6 +160,24 @@ public class BatchServiceImpl implements BatchService {
             BatchCourseAssignment savedAssignment = batchCourseAssignmentRepository.save(assignment);
             log.info("Course {} assigned to batch {} by admin {}", course.getId(), batch.getId(), adminId);
             
+            // Create a course session for this assignment
+            CourseSessionRequest sessionRequest = new CourseSessionRequest();
+            sessionRequest.setAcademicYear(batch.getAdmissionYear() + item.getYear() - 1); // Calculate academic year
+            sessionRequest.setSemester(item.getSemester());
+            sessionRequest.setYear(item.getYear());
+            sessionRequest.setCourseId(course.getId());
+            sessionRequest.setDepartmentId(batch.getDepartmentId());
+            sessionRequest.setBatchId(batch.getId());
+            
+            try {
+                courseSessionService.createCourseSession(sessionRequest, adminId);
+                log.info("Course session created for batch {} course {} by admin {}", 
+                    batch.getId(), course.getId(), adminId);
+            } catch (Exception e) {
+                log.error("Failed to create course session for batch {} course {}: {}", 
+                    batch.getId(), course.getId(), e.getMessage());
+            }
+            
             responses.add(convertToCourseAssignmentResponse(savedAssignment));
         }
         
@@ -179,6 +202,22 @@ public class BatchServiceImpl implements BatchService {
         
         // Validate department access
         validateDepartmentAccess(adminId, assignment.getBatch().getDepartmentId());
+        
+        // Find and delete associated course sessions
+        List<CourseSession> sessions = courseSessionRepository.findByBatchId(assignment.getBatch().getId()).stream()
+            .filter(session -> session.getCourse().getId().equals(assignment.getCourse().getId()) &&
+                   session.getYear().equals(assignment.getYear()) &&
+                   session.getSemester().equals(assignment.getSemester()))
+            .collect(Collectors.toList());
+        
+        for (CourseSession session : sessions) {
+            try {
+                courseSessionService.deleteCourseSession(session.getId(), adminId);
+            } catch (Exception e) {
+                log.error("Failed to delete course session {} when removing assignment: {}", 
+                    session.getId(), e.getMessage());
+            }
+        }
         
         // Soft delete
         assignment.setIsActive(false);

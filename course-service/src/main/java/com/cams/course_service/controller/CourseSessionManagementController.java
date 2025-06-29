@@ -71,6 +71,21 @@ public class CourseSessionManagementController {
         List<CourseSessionResponse> sessions = courseSessionService.getCourseSessionsByDepartment(departmentId);
         return ResponseEntity.ok(sessions);
     }
+    
+    @GetMapping("/batch/{batchId}")
+    public ResponseEntity<List<CourseSessionResponse>> getCourseSessionsByBatch(@PathVariable Long batchId) {
+        List<CourseSessionResponse> sessions = courseSessionService.getCourseSessionsByBatch(batchId);
+        return ResponseEntity.ok(sessions);
+    }
+    
+    @GetMapping("/batch/{batchId}/year/{year}/semester/{semester}")
+    public ResponseEntity<List<CourseSessionResponse>> getCourseSessionsByBatchAndSemester(
+            @PathVariable Long batchId,
+            @PathVariable Integer year,
+            @PathVariable Integer semester) {
+        List<CourseSessionResponse> sessions = courseSessionService.getCourseSessionsByBatchAndSemester(batchId, year, semester);
+        return ResponseEntity.ok(sessions);
+    }
 
     @PostMapping("/{id}/activate")
     public ResponseEntity<CourseSessionResponse> activateCourseSession(

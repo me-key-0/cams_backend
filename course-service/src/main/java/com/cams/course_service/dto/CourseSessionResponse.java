@@ -22,6 +22,8 @@ public class CourseSessionResponse {
     private LocalDateTime activatedAt;
     private Long createdBy;
     private Integer enrolledStudents;
+    private Long batchId; // Added batch reference
+    private String batchName; // Added batch name
     
     @Data
     public static class LecturerInfo {

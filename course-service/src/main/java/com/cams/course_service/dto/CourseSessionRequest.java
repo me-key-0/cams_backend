@@ -12,4 +12,5 @@ public class CourseSessionRequest {
     private Long courseId;
     private Long departmentId;
     private List<Long> lecturerIds;
+    private Long batchId; // Added batch reference
 }

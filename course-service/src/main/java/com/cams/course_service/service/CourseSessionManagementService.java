@@ -13,6 +13,10 @@ public interface CourseSessionManagementService {
     CourseSessionResponse getCourseSessionById(Long id);
     List<CourseSessionResponse> getCourseSessionsByDepartment(Long departmentId);
     
+    // New methods for batch-specific course sessions
+    List<CourseSessionResponse> getCourseSessionsByBatch(Long batchId);
+    List<CourseSessionResponse> getCourseSessionsByBatchAndSemester(Long batchId, Integer year, Integer semester);
+    
     // Session Activation
     CourseSessionResponse activateCourseSession(Long id, Long adminId);
     CourseSessionResponse deactivateCourseSession(Long id, Long adminId);
