@@ -754,3 +754,34 @@ ws.send(JSON.stringify({
   ]
 }
 ```
+
+---
+
+## 🎓 Course Service Enrollment Endpoints
+
+### Check Student Enrollment
+**GET** `/api/enrollment/check-enrollment`
+
+**Query Parameters:**
+- `studentId`: Student ID
+- `courseSessionId`: Course session ID
+
+**Response:**
+```json
+true
+```
+
+This endpoint checks if a student is enrolled in a specific course session. It returns a boolean value indicating whether the student is enrolled (true) or not (false).
+
+### Get Enrolled Students
+**GET** `/api/enrollment/course-session/{courseSessionId}/students`
+
+**Headers:**
+- `X-User-Role`: ADMIN, SUPER_ADMIN, LECTURER
+
+**Response:**
+```json
+[456, 789, 101]
+```
+
+This endpoint returns a list of student IDs enrolled in a specific course session.

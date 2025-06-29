@@ -6,19 +6,21 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EvaluationQuestion {
+public class EvaluationCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private String question;
     
-    @ManyToOne
-    @JoinColumn(name = "category_id")
-    private EvaluationCategory category;
+    private String name;
+    private String description;
+    
+    @OneToMany(mappedBy = "category")
+    private List<EvaluationQuestion> questions;
 }
