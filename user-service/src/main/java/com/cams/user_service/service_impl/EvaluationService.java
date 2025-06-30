@@ -26,6 +26,9 @@ public class EvaluationService implements com.cams.user_service.service.Evaluati
     private LecturerService lecturerService;
 
     @Autowired
+    private LecturerRepository lecturerRepository;
+
+    @Autowired
     private EvaluationQuestionRepository evaluationQuestionRepository;
 
     @Autowired
@@ -218,6 +221,96 @@ public class EvaluationService implements com.cams.user_service.service.Evaluati
             evaluation.getAnswers().add(evaluationAnswer);
         }
         
+        evaluationRepository.save(evaluation);
+        
+        return new ConfirmationDto(true, "Evaluation Submitted Successfully!");
+    }
+    
+    @Override
+    @Transactional
+    public ConfirmationDto submitEvaluationWithCourseSession(Long studentId, Long courseSessionId, List<EvaluationAnswerDto> answers) {
+        // Validate student exists
+        Optional<Student> studentOpt = studentRepository.findById(studentId);
+        if (studentOpt.isEmpty()) {
+            return new ConfirmationDto(false, "Student not found");
+        }
+        Student student = studentOpt.get();
+        
+        // Validate course session exists and has an active evaluation session
+        Optional<EvaluationSession> sessionOpt = evaluationSessionRepository.findByCourseSessionId(courseSessionId);
+        if (sessionOpt.isEmpty()) {
+            return new ConfirmationDto(false, "Evaluation session not found for this course");
+        }
+        
+        EvaluationSession session = sessionOpt.get();
+        if (!session.isActive()) {
+            return new ConfirmationDto(false, "Evaluation session is not active");
+        }
+        
+        // Check if student is enrolled in the course
+        boolean isEnrolled = courseServiceClient.isStudentEnrolled(studentId, courseSessionId);
+        if (!isEnrolled) {
+            return new ConfirmationDto(false, "Student is not enrolled in this course");
+        }
+        
+        // Get lecturer IDs for this course session
+        List<Long> lecturerIds;
+        try {
+            lecturerIds = courseServiceClient.getLecturerIdsByCourseSessionId(courseSessionId);
+            if (lecturerIds == null || lecturerIds.isEmpty()) {
+                return new ConfirmationDto(false, "No lecturers found for this course session");
+            }
+        } catch (Exception e) {
+            return new ConfirmationDto(false, "Error fetching lecturers: " + e.getMessage());
+        }
+        
+        // Use the first lecturer ID
+        Long lecturerId = lecturerIds.get(0);
+        
+        // Get lecturer
+        Optional<Lecturer> lecturerOpt = lecturerService.getLecturerById(lecturerId);
+        if (lecturerOpt.isEmpty()) {
+            return new ConfirmationDto(false, "Lecturer not found");
+        }
+        Lecturer lecturer = lecturerOpt.get();
+        
+        // Validate answers
+        if (answers == null || answers.isEmpty()) {
+            return new ConfirmationDto(false, "No evaluation answers provided");
+        }
+        
+        // Check if student has already submitted an evaluation for this lecturer in this session
+        List<Evaluation> existingEvaluations = evaluationRepository.findByStudentId(studentId);
+        boolean alreadySubmitted = existingEvaluations.stream()
+            .anyMatch(e -> e.getLecturer().getId().equals(lecturerId) && 
+                     e.getSession().getId().equals(session.getId()));
+        
+        if (alreadySubmitted) {
+            return new ConfirmationDto(false, "You have already submitted an evaluation for this lecturer");
+        }
+        
+        // Create evaluation
+        Evaluation evaluation = new Evaluation();
+        evaluation.setStudent(student);
+        evaluation.setLecturer(lecturer);
+        evaluation.setSession(session);
+        
+        // Add answers
+        for (EvaluationAnswerDto answerDto : answers) {
+            EvaluationQuestion question = evaluationQuestionRepository.findById(answerDto.getQuestionId())
+                    .orElseThrow(() -> new RuntimeException("Question not found with ID: " + answerDto.getQuestionId()));
+
+            EvaluationOption answer = evaluationOptionRepository.findById(answerDto.getAnswerId())
+                    .orElseThrow(() -> new RuntimeException("Answer option not found with ID: " + answerDto.getAnswerId()));
+
+            EvaluationAnswer evaluationAnswer = new EvaluationAnswer();
+            evaluationAnswer.setAnswer(answer);
+            evaluationAnswer.setQuestion(question);
+            evaluationAnswer.setEvaluation(evaluation);
+            evaluation.getAnswers().add(evaluationAnswer);
+        }
+        
+        // Save evaluation
         evaluationRepository.save(evaluation);
         
         return new ConfirmationDto(true, "Evaluation Submitted Successfully!");

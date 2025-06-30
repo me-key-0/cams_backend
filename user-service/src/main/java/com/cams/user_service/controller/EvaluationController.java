@@ -81,6 +81,17 @@ public class EvaluationController {
             Long.parseLong(studentId), request);
         return ResponseEntity.ok(result);
     }
+    
+    // New endpoint for submitting evaluation with studentId in path
+    @PostMapping("/submit/{studentId}")
+    public ResponseEntity<ConfirmationDto> submitEvaluationWithStudentId(
+            @PathVariable Long studentId,
+            @RequestBody EvaluationSubmitRequest request) {
+        
+        ConfirmationDto result = evaluationService.submitEvaluationWithCourseSession(
+            studentId, request.getCourseSessionId(), request.getAnswers());
+        return ResponseEntity.ok(result);
+    }
 
     // Questions and categories endpoints
     @GetMapping("/questions")
