@@ -14,6 +14,7 @@ public interface EvaluationService {
     
     // Evaluation submission
     ConfirmationDto submitEvaluation(Long studentId, EvaluationRequestDto request);
+    ConfirmationDto submitEvaluationWithCourseSession(Long studentId, Long courseSessionId, List<EvaluationAnswerDto> answers);
     
     // Questions and categories
     List<EvaluationQuestion> getEvaluationQuestions();
