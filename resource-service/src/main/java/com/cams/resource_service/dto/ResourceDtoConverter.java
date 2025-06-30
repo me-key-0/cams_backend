@@ -30,7 +30,7 @@ public class ResourceDtoConverter {
         
         // Generate download URL for non-link resources
         if (resource.getType() != ResourceType.LINK) {
-            response.setDownloadUrl("/api/v1/resources/download/" + resource.getFileName() + "/" + resource.getId());
+            response.setDownloadUrl("/api/v1/resources/download/" + resource.getId());
         }
         
         // Format file size

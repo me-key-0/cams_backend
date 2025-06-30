@@ -226,18 +226,25 @@ public class ResourceServiceImpl implements ResourceService {
         }
 
         try {
+            log.info("Attempting to download resource: {}, filename: {}, path: {}", 
+                resourceId, resource.getFileName(), resource.getFilePath());
+            
             Path filePath = fileStorageService.getFilePath(resource.getCourseSessionId(), resource.getFileName());
-            Resource fileResource = new UrlResource(filePath.toUri());
-
-            if (!fileResource.exists() || !fileResource.isReadable()) {
-                throw new StorageException("File not found or not readable: " + filePath);
+            log.info("File path resolved to: {}", filePath);
+            
+            FileSystemResource fileResource = new FileSystemResource(filePath);
+            
+            if (!fileResource.exists()) {
+                log.error("File does not exist at path: {}", filePath);
+                throw new StorageException("File not found on disk: " + resource.getFileName());
             }
-
+            
+            log.info("File exists and has size: {}", fileResource.contentLength());
             return fileResource;
-
+            
         } catch (Exception e) {
             log.error("Failed to get file for download: {}", resourceId, e);
-            throw new StorageException("Failed to prepare file for download", e);
+            throw new StorageException("Failed to prepare file for download: " + e.getMessage(), e);
         }
     }
 
