@@ -184,9 +184,8 @@ public class ResourceController {
     }
 
     // Download resource
-    @GetMapping("/download/{fileName}/{id}")
+    @GetMapping("/download/{id}")
     public ResponseEntity<Resource> downloadResource(
-            @PathVariable String fileName,
             @PathVariable Long id,
             @RequestHeader("X-User-Id") String userId,
             @RequestHeader("X-User-Role") String role) {

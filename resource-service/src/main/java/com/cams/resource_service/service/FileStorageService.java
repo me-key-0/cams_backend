@@ -57,6 +57,7 @@ public class FileStorageService {
         Path filePath = storageConfig.getFilePath(courseSessionId, fileName);
         
         if (!Files.exists(filePath)) {
+            log.error("File not found: {}", filePath);
             throw new StorageException("File not found: " + fileName);
         }
         
