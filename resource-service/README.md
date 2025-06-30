@@ -312,7 +312,7 @@ mvn spring-boot:run
 ### File Download
 
 #### Download Resource
-**GET** `/api/v1/resources/download/{fileName}/{id}`
+**GET** `/api/v1/resources/download/{id}`
 
 **Headers:**
 - `X-User-Id`: User ID
@@ -325,7 +325,7 @@ mvn spring-boot:run
 
 **Example:**
 ```bash
-curl -X GET "http://localhost:8760/api/v1/resources/download/uuid-filename.pdf/1" \
+curl -X GET "http://localhost:8760/api/v1/resources/download/1" \
   -H "X-User-Id: 456" \
   -H "X-User-Role: STUDENT" \
   --output downloaded-file.pdf

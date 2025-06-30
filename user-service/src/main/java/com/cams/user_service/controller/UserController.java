@@ -36,6 +36,12 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        User user = userService.getUserById(id).get();
+        return new ResponseEntity<User>(user,HttpStatus.OK);
+    }
+
     @GetMapping("/validate")
     public ResponseEntity<Boolean> validateCredentials(
             @RequestParam("email") String email,

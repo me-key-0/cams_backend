@@ -5,6 +5,8 @@ import com.cams.course_service.dto.*;
 import java.util.List;
 
 public interface LecturerManagementService {
+
+    
     
     // Lecturer Capacity Management
     LecturerCapacityResponse setLecturerCapacity(LecturerCapacityRequest request, Long adminId);

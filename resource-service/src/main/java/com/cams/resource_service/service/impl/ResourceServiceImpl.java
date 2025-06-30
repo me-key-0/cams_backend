@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -219,20 +220,27 @@ public class ResourceServiceImpl implements ResourceService {
     public Resource downloadResource(Long resourceId) {
         ResourceMaterial resource = resourceRepository.findById(resourceId)
             .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + resourceId));
-        
+
         if (resource.getType() == ResourceType.LINK) {
             throw new StorageException("Cannot download link resource");
         }
-        
+
         try {
             Path filePath = fileStorageService.getFilePath(resource.getCourseSessionId(), resource.getFileName());
-            return new FileSystemResource(filePath);
-            
+            Resource fileResource = new UrlResource(filePath.toUri());
+
+            if (!fileResource.exists() || !fileResource.isReadable()) {
+                throw new StorageException("File not found or not readable: " + filePath);
+            }
+
+            return fileResource;
+
         } catch (Exception e) {
             log.error("Failed to get file for download: {}", resourceId, e);
             throw new StorageException("Failed to prepare file for download", e);
         }
     }
+
 
     @Override
     @Transactional

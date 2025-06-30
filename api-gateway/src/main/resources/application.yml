@@ -4,11 +4,6 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: course-service
-          uri: lb://course-service
-          predicates:
-            - Path=/api/courses/**, /api/enrollment/**, /api/assignment/**, /api/session/**, /api/batches/**, /api/*
-
         - id: auth-service
           uri: lb://auth-service
           predicates:
@@ -19,7 +14,7 @@ spring:
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/api/users/**, /api/user/**
+            - Path=/api/v1/evaluation/**, /api/users/**, /api/user/**
           # filters:
           #   - StripPrefix=1
 
@@ -37,6 +32,10 @@ spring:
           uri: lb://communication-service
           predicates:
             - Path=/api/com/**
+        - id: course-service
+          uri: lb://course-service
+          predicates:
+            - Path=/api/**, /api/courses/**, /api/enrollment/**, /api/assignment/**, /api/session/**, /api/batches/**
           
   security:
     jwt:

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Data
 @Setter
@@ -32,6 +34,7 @@ public class User {
     private Department department;
 
     @OneToOne(mappedBy = "user")
+    @JsonIgnore
     private Student student;
 
     @OneToOne(mappedBy = "user")

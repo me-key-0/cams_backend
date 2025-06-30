@@ -20,6 +20,9 @@ public class EvaluationService implements com.cams.user_service.service.Evaluati
     private StudentService studentService;
 
     @Autowired
+    private StudentRepository studentRepository;
+
+    @Autowired
     private LecturerService lecturerService;
 
     @Autowired
@@ -145,7 +148,7 @@ public class EvaluationService implements com.cams.user_service.service.Evaluati
     @Override
     @Transactional
     public ConfirmationDto submitEvaluation(Long studentId, EvaluationRequestDto request) {
-        Optional<Student> studentOpt = studentService.getStudentById(studentId);
+        Optional<Student> studentOpt = studentRepository.findById(studentId);
         if (studentOpt.isEmpty()) {
             return new ConfirmationDto(false, "Student not found");
         }
