@@ -67,10 +67,11 @@ public class EvaluationController {
     }
 
     // Evaluation submission endpoint
-    @PostMapping("/submit")
+    @PostMapping("/submit/{studentId}")
     public ResponseEntity<ConfirmationDto> submitEvaluation(
+            @PathVariable Long studentId,
             @RequestBody EvaluationRequestDto request,
-            @RequestHeader("X-User-Id") String studentId,
+            // @RequestHeader("X-User-Id") String studentId,
             @RequestHeader("X-User-Role") String role) {
         
         if (!"STUDENT".equals(role)) {
@@ -78,7 +79,7 @@ public class EvaluationController {
         }
         
         ConfirmationDto result = evaluationService.submitEvaluation(
-            Long.parseLong(studentId), request);
+            studentId, request);
         return ResponseEntity.ok(result);
     }
 

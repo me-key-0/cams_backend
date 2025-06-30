@@ -35,6 +35,9 @@ public class EvaluationService implements com.cams.user_service.service.Evaluati
     private EvaluationSessionRepository evaluationSessionRepository;
 
     @Autowired
+    private EvaluationAnswerRepository evaluationAnswerRepository;
+
+    @Autowired
     private EvaluationRepository evaluationRepository;
     
     @Autowired
@@ -153,8 +156,18 @@ public class EvaluationService implements com.cams.user_service.service.Evaluati
             return new ConfirmationDto(false, "Student not found");
         }
         
-        Optional<Lecturer> lecturerOpt = lecturerService.getLecturerById(request.getLecturerId());
-        if (lecturerOpt.isEmpty()) {
+        List<Lecturer> lecturerIds = courseServiceClient.getLecturerIdsByCourseSessionId(request.getCourseSessionId());
+
+        Lecturer lecturerOpt = lecturerIds.get(0);
+
+        // System.out.println("........................."+ x);
+        // Optional<Lecturer> lecturerOpt = lecturerService.getLecturerById(x.getId());
+
+        // if (lecturerOpt.isEmpty()) {
+        //     return new ConfirmationDto(false, "Lecturer not found");
+        // }
+
+        if (lecturerOpt == null) {
             return new ConfirmationDto(false, "Lecturer not found");
         }
 
@@ -183,7 +196,8 @@ public class EvaluationService implements com.cams.user_service.service.Evaluati
         }
 
         Student student = studentOpt.get();
-        Lecturer lecturer = lecturerOpt.get();
+        // Lecturer lecturer = lecturerOpt.get();
+        Lecturer lecturer = lecturerOpt;
 
         if (request.getAnswers() == null || request.getAnswers().isEmpty()) {
             return new ConfirmationDto(false, "No evaluation answers provided");
@@ -204,6 +218,7 @@ public class EvaluationService implements com.cams.user_service.service.Evaluati
         evaluation.setLecturer(lecturer);
         evaluation.setSession(session);
 
+
         for (EvaluationAnswerDto answerDto : request.getAnswers()) {
             EvaluationQuestion question = evaluationQuestionRepository.findById(answerDto.getQuestionId())
                     .orElseThrow(() -> new RuntimeException("Question not found"));
@@ -216,6 +231,8 @@ public class EvaluationService implements com.cams.user_service.service.Evaluati
             evaluationAnswer.setQuestion(question);
             evaluationAnswer.setEvaluation(evaluation);
             evaluation.getAnswers().add(evaluationAnswer);
+
+            evaluationAnswerRepository.save(evaluationAnswer);
         }
         
         evaluationRepository.save(evaluation);
