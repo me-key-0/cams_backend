@@ -1,5 +1,6 @@
 package com.cams.user_service.service_impl;
 
+import com.cams.user_service.dto.StudentDto;
 import com.cams.user_service.model.Student;
 import com.cams.user_service.model.User;
 import com.cams.user_service.repository.StudentRepository;
@@ -20,8 +21,35 @@ public class StudentService implements com.cams.user_service.service.StudentServ
     private UserService userService;
 
     @Override
-    public Optional<Student> getStudentById(Long id) {
-        return studentRepository.findById(id);
+    public StudentDto getStudentById(Long id) {
+        Student student = studentRepository.findById(id).get();
+
+        StudentDto dto = new StudentDto();
+        dto.setUsername(student.getUsername()); 
+        dto.setAdmissionYear(student.getAdmissionYear());
+        dto.setCurrentSemester(student.getCurrentSemester());
+        dto.setCurrentYear(student.getCurrentYear());
+        dto.setEmail(student.getEmail());
+        dto.setId(student.getId());
+        dto.setUsername(student.getUsername());
+
+        return dto;
+    }
+
+    @Override
+    public StudentDto getStudentByUserId(Long id) {
+        Student student = studentRepository.findByUserId(id).get();
+
+        StudentDto dto = new StudentDto();
+        dto.setUsername(student.getUsername()); 
+        dto.setAdmissionYear(student.getAdmissionYear());
+        dto.setCurrentSemester(student.getCurrentSemester());
+        dto.setCurrentYear(student.getCurrentYear());
+        dto.setEmail(student.getEmail());
+        dto.setId(student.getId());
+        dto.setUsername(student.getUsername());
+
+        return dto;
     }
 
     @Override

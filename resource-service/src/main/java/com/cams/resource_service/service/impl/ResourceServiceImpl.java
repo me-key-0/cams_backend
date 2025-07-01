@@ -1,256 +1,391 @@
 package com.cams.resource_service.service.impl;
 
 import com.cams.resource_service.client.CourseServiceClient;
-import com.cams.resource_service.config.LocalStorageConfig;
-import com.cams.resource_service.exception.CourseSessionNotFoundException;
-import com.cams.resource_service.exception.ResourceException;
+import com.cams.resource_service.config.StorageConfig;
+import com.cams.resource_service.dto.ResourceDtoConverter;
+import com.cams.resource_service.dto.ResourceResponse;
+import com.cams.resource_service.dto.ResourceStatsResponse;
+import com.cams.resource_service.dto.UpdateResourceRequest;
+import com.cams.resource_service.exception.ResourceNotFoundException;
 import com.cams.resource_service.exception.StorageException;
 import com.cams.resource_service.exception.UnauthorizedAccessException;
 import com.cams.resource_service.model.ResourceMaterial;
 import com.cams.resource_service.model.enums.ResourceStatus;
 import com.cams.resource_service.model.enums.ResourceType;
 import com.cams.resource_service.repository.ResourceMaterialRepository;
-import com.cams.resource_service.service.LocalFileStorageService;
+import com.cams.resource_service.service.FileStorageService;
 import com.cams.resource_service.service.ResourceService;
 import feign.FeignException;
-import jakarta.annotation.PostConstruct;
-import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class ResourceServiceImpl implements ResourceService {
 
-    @Autowired
-    private ResourceMaterialRepository resourceRepository;
-    
-    @Autowired
-    private CourseServiceClient courseServiceClient;
-    
-    @Autowired
-    private LocalFileStorageService fileStorageService;
-    
-    @Autowired
-    private LocalStorageConfig storageConfig;
-
-    @PostConstruct
-    private void init() {
-        try {
-            Files.createDirectories(Paths.get(storageConfig.getBaseDir()));
-        } catch (IOException e) {
-            log.error("Failed to create base directory", e);
-            throw new StorageException("Failed to initialize storage", e);
-        }
-    }
+    private final ResourceMaterialRepository resourceRepository;
+    private final FileStorageService fileStorageService;
+    private final CourseServiceClient courseServiceClient;
+    private final StorageConfig storageConfig;
 
     @Override
     @Transactional
-    public ResourceMaterial uploadResource(MultipartFile file, String title, String description,
-                                         ResourceType type, Long courseSessionId, Long uploadedBy,
-                                         List<String> categories) {
+    public ResourceResponse uploadFile(MultipartFile file, String title, String description,
+                                     ResourceType type, Long courseSessionId, Long uploadedBy,
+                                     String uploaderName, List<String> categories) {
+        
+        // Validate course session and lecturer authorization
+        // validateCourseSessionAccess(courseSessionId, uploadedBy);
+        
         try {
-            // Validate course session
-            courseServiceClient.validateLecturerForCourseSession(uploadedBy, courseSessionId);
+            // Store file and get unique filename
+            String uniqueFilename = fileStorageService.storeFile(file, courseSessionId, type);
             
-            // Generate unique filename
-            String fileName = file.getOriginalFilename();
-            
-            // Construct file path using STORAGE_DIRECTORY constant
-            String absolutePath = LocalStorageConfig.getFullFilePath(courseSessionId, fileName);
-            
-            // Store file using absolute path
-            fileStorageService.storeFile(file, Paths.get(absolutePath), type);
-            
-            // Create resource
+            // Create resource entity
             ResourceMaterial resource = new ResourceMaterial();
             resource.setTitle(title);
             resource.setDescription(description);
             resource.setType(type);
-            resource.setFileUrl(absolutePath);
-            resource.setFileName(fileName);
+            resource.setFileName(uniqueFilename);
             resource.setOriginalFileName(file.getOriginalFilename());
+            resource.setFilePath(storageConfig.getFilePath(courseSessionId, uniqueFilename).toString());
             resource.setFileSize(file.getSize());
-            resource.setUploadedBy(uploadedBy);
-            resource.setCourseSessionId(courseSessionId);
+            resource.setMimeType(file.getContentType());
             resource.setCategories(new HashSet<>(categories));
+            resource.setUploadedBy(uploadedBy);
+            resource.setUploaderName(uploaderName);
+            resource.setCourseSessionId(courseSessionId);
             resource.setStatus(ResourceStatus.ACTIVE);
+            resource.setUploadedAt(LocalDateTime.now());
+            resource.setDownloadCount(0);
             
-            return resourceRepository.save(resource);
-        } catch (FeignException.NotFound e) {
-            throw new CourseSessionNotFoundException("Course session not found with id: " + courseSessionId);
-        } catch (IOException e) {
-            throw new StorageException("Failed to store file", e);
+            ResourceMaterial savedResource = resourceRepository.save(resource);
+            log.info("File resource uploaded successfully: {}", savedResource.getId());
+            
+            return ResourceDtoConverter.toResponse(savedResource);
+            
+        } catch (Exception e) {
+            log.error("Failed to upload file resource", e);
+            throw new StorageException("Failed to upload file: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public Optional<ResourceMaterial> getResourceById(Long id) {
-        return resourceRepository.findById(id);
+    @Transactional
+    public ResourceResponse createLink(String title, String description, String linkUrl,
+                                     Long courseSessionId, Long uploadedBy, String uploaderName,
+                                     List<String> categories) {
+        
+        // Validate course session and lecturer authorization
+        validateCourseSessionAccess(courseSessionId, uploadedBy);
+        
+        try {
+            // Create link resource entity
+            ResourceMaterial resource = new ResourceMaterial();
+            resource.setTitle(title);
+            resource.setDescription(description);
+            resource.setType(ResourceType.LINK);
+            resource.setLinkUrl(linkUrl);
+            resource.setFileName("link");
+            resource.setOriginalFileName("External Link");
+            resource.setFilePath(linkUrl);
+            resource.setFileSize(0L);
+            resource.setMimeType("text/html");
+            resource.setCategories(new HashSet<>(categories));
+            resource.setUploadedBy(uploadedBy);
+            resource.setUploaderName(uploaderName);
+            resource.setCourseSessionId(courseSessionId);
+            resource.setStatus(ResourceStatus.ACTIVE);
+            resource.setUploadedAt(LocalDateTime.now());
+            resource.setDownloadCount(0);
+            
+            ResourceMaterial savedResource = resourceRepository.save(resource);
+            log.info("Link resource created successfully: {}", savedResource.getId());
+            
+            return ResourceDtoConverter.toResponse(savedResource);
+            
+        } catch (Exception e) {
+            log.error("Failed to create link resource", e);
+            throw new StorageException("Failed to create link: " + e.getMessage(), e);
+        }
     }
 
     @Override
-    public List<ResourceMaterial> getResourcesByCourseSession(Long courseSessionId) {
+    public ResourceResponse getResourceById(Long id) {
+        ResourceMaterial resource = resourceRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + id));
+        
+        return ResourceDtoConverter.toResponse(resource);
+    }
+
+    @Override
+    public List<ResourceResponse> getResourcesByCourseSession(Long courseSessionId) {
         try {
-            // Check if course session exists
+            // Validate course session exists
             if (!courseServiceClient.checkCourseSessionExists(courseSessionId)) {
-                throw new CourseSessionNotFoundException("Course session not found with id: " + courseSessionId);
+                throw new ResourceNotFoundException("Course session not found with id: " + courseSessionId);
             }
-            return resourceRepository.findByCourseSessionIdAndStatus(courseSessionId, ResourceStatus.ACTIVE);
+            
+            List<ResourceMaterial> resources = resourceRepository
+                .findByCourseSessionIdAndStatus(courseSessionId, ResourceStatus.ACTIVE);
+            
+            return ResourceDtoConverter.toResponseList(resources);
+            
         } catch (FeignException e) {
             if (e.status() == 404) {
-                throw new CourseSessionNotFoundException("Course session not found with id: " + courseSessionId);
+                throw new ResourceNotFoundException("Course session not found with id: " + courseSessionId);
             }
             throw new RuntimeException("Error validating course session", e);
         }
     }
 
     @Override
-    public List<ResourceMaterial> getResourcesByType(Long courseSessionId, ResourceType type) {
-        return resourceRepository.findByCourseSessionIdAndTypeAndStatus(courseSessionId, type, ResourceStatus.ACTIVE);
+    public ResourceStatsResponse getResourcesStatsByCourseSession(Long courseSessionId) {
+        List<ResourceResponse> resources = getResourcesByCourseSession(courseSessionId);
+        
+        // Calculate statistics
+        Map<String, Integer> resourcesByType = resources.stream()
+            .collect(Collectors.groupingBy(
+                r -> r.getType().getDisplayName(),
+                Collectors.collectingAndThen(Collectors.counting(), Math::toIntExact)
+            ));
+        
+        Map<String, Integer> resourcesByCategory = resources.stream()
+            .flatMap(r -> r.getCategories().stream())
+            .collect(Collectors.groupingBy(
+                category -> category,
+                Collectors.collectingAndThen(Collectors.counting(), Math::toIntExact)
+            ));
+        
+        long totalFileSize = resources.stream()
+            .mapToLong(r -> r.getFileSize() != null ? r.getFileSize() : 0L)
+            .sum();
+        
+        ResourceStatsResponse stats = new ResourceStatsResponse();
+        stats.setTotalResources(resources.size());
+        stats.setResourcesByType(resourcesByType);
+        stats.setResourcesByCategory(resourcesByCategory);
+        stats.setResources(resources);
+        stats.setTotalFileSize(totalFileSize);
+        stats.setTotalFileSizeFormatted(formatFileSize(totalFileSize));
+        
+        return stats;
     }
 
     @Override
-    public List<ResourceMaterial> getResourcesByCategory(Long courseSessionId, String category) {
-        return resourceRepository.findByCourseSessionIdAndCategory(courseSessionId, category, ResourceStatus.ACTIVE);
+    public List<ResourceResponse> getResourcesByType(Long courseSessionId, ResourceType type) {
+        List<ResourceMaterial> resources = resourceRepository
+            .findByCourseSessionIdAndTypeAndStatus(courseSessionId, type, ResourceStatus.ACTIVE);
+        
+        return ResourceDtoConverter.toResponseList(resources);
     }
 
     @Override
-    public List<ResourceMaterial> searchResources(Long courseSessionId, String searchTerm) {
-        return resourceRepository.searchInCourseSession(courseSessionId, searchTerm, ResourceStatus.ACTIVE);
+    public List<ResourceResponse> getResourcesByCategory(Long courseSessionId, String category) {
+        List<ResourceMaterial> resources = resourceRepository
+            .findByCourseSessionIdAndCategory(courseSessionId, category, ResourceStatus.ACTIVE);
+        
+        return ResourceDtoConverter.toResponseList(resources);
     }
 
     @Override
-    @Transactional
-    public ResourceMaterial updateResource(Long id, String title, String description, List<String> categories) {
-        ResourceMaterial resource = resourceRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Resource not found with id: " + id));
-
-        resource.setTitle(title);
-        resource.setDescription(description);
-        resource.setCategories(new HashSet<>(categories));
-
-        return resourceRepository.save(resource);
+    public List<ResourceResponse> searchResources(Long courseSessionId, String searchTerm) {
+        List<ResourceMaterial> resources = resourceRepository
+            .searchInCourseSession(courseSessionId, searchTerm, ResourceStatus.ACTIVE);
+        
+        return ResourceDtoConverter.toResponseList(resources);
     }
 
     @Override
-    @Transactional
-    public void deleteResource(Long id) {
-        ResourceMaterial resource = resourceRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Resource not found with id: " + id));
+    public List<ResourceResponse> getResourcesByUploader(Long uploadedBy) {
+        List<ResourceMaterial> resources = resourceRepository
+            .findByUploadedByAndStatus(uploadedBy, ResourceStatus.ACTIVE);
+        
+        return ResourceDtoConverter.toResponseList(resources);
+    }
 
-        // Validate lecturer permissions before deletion
-        validateCourseSession(resource.getCourseSessionId(), resource.getUploadedBy());
+    @Override
+    public Resource downloadResource(Long resourceId) {
+        ResourceMaterial resource = resourceRepository.findById(resourceId)
+            .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + resourceId));
+
+        if (resource.getType() == ResourceType.LINK) {
+            throw new StorageException("Cannot download link resource");
+        }
 
         try {
-            // Delete the file if it exists (for non-link resources)
-            if (resource.getType() != ResourceType.LINK) {
-                String filePath = resource.getFileUrl();
-                if (filePath != null && !filePath.isEmpty()) {
-                    try {
-                        fileStorageService.deleteFileByPath(Paths.get(filePath));
-                        log.info("Successfully deleted file: {}", filePath);
-                    } catch (IOException e) {
-                        log.error("Error deleting file: {}", filePath, e);
-                        throw new ResourceException("Failed to delete file: " + e.getMessage());
-                    // }
-                }
+            log.info("Attempting to download resource: {}, filename: {}, path: {}", 
+                resourceId, resource.getFileName(), resource.getFilePath());
+            
+            Path filePath = fileStorageService.getFilePath(resource.getCourseSessionId(), resource.getFileName());
+            log.info("File path resolved to: {}", filePath);
+            
+            FileSystemResource fileResource = new FileSystemResource(filePath);
+            
+            if (!fileResource.exists()) {
+                log.error("File does not exist at path: {}", filePath);
+                throw new StorageException("File not found on disk: " + resource.getFileName());
             }
             
-            // Delete the database record
-            resourceRepository.delete(resource);
-            log.info("Successfully deleted resource with id: {}", id);
+            log.info("File exists and has size: {}", fileResource.contentLength());
+            return fileResource;
+            
+        } catch (Exception e) {
+            log.error("Failed to get file for download: {}", resourceId, e);
+            throw new StorageException("Failed to prepare file for download: " + e.getMessage(), e);
         }
-    }catch (Exception e) {
-        log.error("Error deleting resource", e);
-        throw new ResourceException("Failed to delete resource: " + e.getMessage());}
     }
+
 
     @Override
     @Transactional
-    public void incrementDownloadCount(Long id) {
-        resourceRepository.findById(id).ifPresent(resource -> {
+    public void incrementDownloadCount(Long resourceId) {
+        resourceRepository.findById(resourceId).ifPresent(resource -> {
             resource.setDownloadCount(resource.getDownloadCount() + 1);
             resourceRepository.save(resource);
+            log.debug("Download count incremented for resource: {}", resourceId);
         });
     }
 
     @Override
-    public List<ResourceMaterial> getResourcesByUploader(Long uploadedBy) {
-        return resourceRepository.findByUploadedByAndStatus(uploadedBy, ResourceStatus.ACTIVE);
+    @Transactional
+    public ResourceResponse updateResource(Long id, UpdateResourceRequest request, Long updatedBy) {
+        ResourceMaterial resource = resourceRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + id));
+        
+        // Validate ownership
+        if (!resource.getUploadedBy().equals(updatedBy)) {
+            throw new UnauthorizedAccessException("You can only update your own resources");
+        }
+        
+        // Update fields
+        resource.setTitle(request.getTitle());
+        resource.setDescription(request.getDescription());
+        resource.setCategories(new HashSet<>(request.getCategories()));
+        
+        // Update link URL for LINK type resources
+        if (resource.getType() == ResourceType.LINK && request.getLinkUrl() != null) {
+            resource.setLinkUrl(request.getLinkUrl());
+            resource.setFilePath(request.getLinkUrl());
+        }
+        
+        ResourceMaterial updatedResource = resourceRepository.save(resource);
+        log.info("Resource updated successfully: {}", id);
+        
+        return ResourceDtoConverter.toResponse(updatedResource);
     }
 
     @Override
-    public byte[] getFileContent(ResourceMaterial resource) {
+    @Transactional
+    public void deleteResource(Long id, Long deletedBy) {
+        ResourceMaterial resource = resourceRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + id));
+        
+        // Validate ownership
+        if (!resource.getUploadedBy().equals(deletedBy)) {
+            throw new UnauthorizedAccessException("You can only delete your own resources");
+        }
+        
         try {
-            if (resource.getType() == ResourceType.LINK) {
-                throw new StorageException("Cannot download link resource");
+            // Delete physical file if it's not a link
+            if (resource.getType() != ResourceType.LINK) {
+                fileStorageService.deleteFile(resource.getCourseSessionId(), resource.getFileName());
             }
             
-            String filePath = resource.getFileUrl();
-            return Files.readAllBytes(Paths.get(filePath));
-        } catch (IOException e) {
-            throw new StorageException("Failed to read file content", e);
+            // Delete database record
+            resourceRepository.delete(resource);
+            log.info("Resource deleted successfully: {}", id);
+            
+        } catch (Exception e) {
+            log.error("Failed to delete resource: {}", id, e);
+            throw new StorageException("Failed to delete resource", e);
         }
     }
 
-    // private void validateFileSize(MultipartFile file) {
-    //     if (file.getSize() > storageConfig.getMaxSizeBytes()) {
-    //         throw new IllegalArgumentException(
-    //             String.format("File size exceeds maximum limit of %d bytes", storageConfig.getMaxSizeBytes())
-    //         );
-    //     }
-    // }
+    @Override
+    public boolean canAccessResource(Long resourceId, Long userId, String userRole) {
+        try {
+            ResourceMaterial resource = resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
+            
+            // Students and lecturers can access resources in their course sessions
+            if ("STUDENT".equals(userRole) || "LECTURER".equals(userRole)) {
+                // For students, we would need to check if they're enrolled in the course session
+                // For lecturers, we would need to check if they're assigned to the course session
+                // For now, allowing access to all active resources
+                return resource.getStatus() == ResourceStatus.ACTIVE;
+            }
+            
+            // Admins can access all resources
+            return "ADMIN".equals(userRole) || "SUPER_ADMIN".equals(userRole);
+            
+        } catch (Exception e) {
+            log.error("Error checking resource access", e);
+            return false;
+        }
+    }
 
-    // private void validateFileType(MultipartFile file, ResourceType type) {
-    //     String contentType = file.getContentType();
-    //     if (contentType == null) {
-    //         throw new IllegalArgumentException("File type cannot be determined");
-    //     }
+    @Override
+    public boolean canManageResource(Long resourceId, Long userId) {
+        try {
+            ResourceMaterial resource = resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
+            
+            // Only the uploader can manage the resource
+            return resource.getUploadedBy().equals(userId);
+            
+        } catch (Exception e) {
+            log.error("Error checking resource management permission", e);
+            return false;
+        }
+    }
 
-    //     boolean isValid = switch (type) {
-    //         case DOCUMENT -> contentType.matches("application/pdf|application/msword|application/vnd.openxmlformats-officedocument.*|application/vnd.ms-excel|application/vnd.ms-powerpoint");
-    //         case VIDEO -> contentType.startsWith("video/");
-    //         case PHOTO -> contentType.startsWith("image/");
-    //         case FOLDER, LINK -> true;
-    //     };
-
-    //     if (!isValid) {
-    //         throw new IllegalArgumentException("Invalid file type for resource type: " + type);
-    //     }
-    // }
-
-    private void validateCourseSession(Long courseSessionId, Long lecturerId) {
+    private void validateCourseSessionAccess(Long courseSessionId, Long lecturerId) {
         try {
             // Check if course session exists
             if (!courseServiceClient.checkCourseSessionExists(courseSessionId)) {
-                throw new CourseSessionNotFoundException("Course session not found with id: " + courseSessionId);
+                throw new ResourceNotFoundException("Course session not found with id: " + courseSessionId);
             }
-
+            
             // Validate lecturer's permission for the course session
-
             if (!courseServiceClient.validateLecturerForCourseSession(lecturerId, courseSessionId)) {
-                System.out.println("lecturerId: " + lecturerId);
-                System.out.println("courseSessionId: " + courseSessionId);
-                System.out.println("#####################################################################################################################");
                 throw new UnauthorizedAccessException("Lecturer is not authorized for this course session");
             }
+            
         } catch (FeignException e) {
             if (e.status() == 404) {
-                throw new CourseSessionNotFoundException("Course session not found with id: " + courseSessionId);
+                throw new ResourceNotFoundException("Course session not found with id: " + courseSessionId);
             } else if (e.status() == 403) {
                 throw new UnauthorizedAccessException("Lecturer is not authorized for this course session");
             }
-            throw new RuntimeException("Error validating course session", e);
+            throw new RuntimeException("Error validating course session access", e);
         }
+    }
+
+    private String formatFileSize(long bytes) {
+        if (bytes == 0) return "0 B";
+        
+        String[] units = {"B", "KB", "MB", "GB", "TB"};
+        int unitIndex = 0;
+        double size = bytes;
+        
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
+        }
+        
+        return String.format("%.1f %s", size, units[unitIndex]);
     }
 }

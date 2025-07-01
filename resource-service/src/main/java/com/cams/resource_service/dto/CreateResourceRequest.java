@@ -24,9 +24,9 @@ public class CreateResourceRequest {
     @NotNull(message = "Course session ID is required")
     private Long courseSessionId;
 
-    @NotNull(message = "Uploader ID is required")
-    private Long uploadedBy;
-
     @Size(min = 1, message = "At least one category is required")
     private List<String> categories;
-} 
+
+    // For LINK type resources
+    private String linkUrl;
+}

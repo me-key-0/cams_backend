@@ -1,13 +1,12 @@
 package com.cams.grade_service.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -19,13 +18,48 @@ public class GradeType {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
-    private Integer value;
+    @Column(nullable = false)
+    private String name; // e.g., "Midterm Exam", "Quiz 1", "Final Exam"
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(nullable = false)
+    private Integer maxScore;
+
+    @Column(nullable = false)
+    private Double weightPercentage; // Weight in final grade calculation
+
+    @Column(nullable = false)
     private Long courseSessionId;
 
-    // public GradeType(String name) {
-    //     this.name = name;
-    // }
+    @Column(nullable = false)
+    private Long createdBy; // Lecturer ID
 
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private GradeTypeCategory category;
+
+    @Column(nullable = false)
+    private Boolean isDefault; // Default grade types like midterm, final
+
+    @Column(nullable = false)
+    private Boolean isActive;
+
+    // For assignment-based grade types
+    private Long assignmentId;
+
+    public enum GradeTypeCategory {
+        EXAM, QUIZ, ASSIGNMENT, PROJECT, PARTICIPATION, OTHER
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        if (isDefault == null) isDefault = false;
+        if (isActive == null) isActive = true;
+    }
 }

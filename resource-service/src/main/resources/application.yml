@@ -1,8 +1,67 @@
-local:
-  storage:
-    # Base directory for storing resources
-    base-dir: ./resources
-    # Maximum file size in bytes (default: 25MB)
-    max-size-bytes: 25600000
+server:
+  port: 8767
 
-# Add existing configurations here
+spring:
+  application:
+    name: resource-service
+  datasource:
+    url: jdbc:mariadb://localhost:3306/resource_db
+    username: root
+    password: $904380
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.value}
+
+# Storage configuration
+app:
+  storage:
+    base-directory: ./resources
+    max-file-size: 52428800 # 50MB in bytes
+    allowed-mime-types:
+      - application/pdf
+      - application/msword
+      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      - application/vnd.ms-powerpoint
+      - application/vnd.openxmlformats-officedocument.presentationml.presentation
+      - application/vnd.ms-excel
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      - text/plain
+      - image/jpeg
+      - image/png
+      - image/gif
+      - image/bmp
+      - image/svg+xml
+      - image/webp
+      - video/mp4
+      - video/avi
+      - video/quicktime
+      - video/x-msvideo
+      - audio/mpeg
+      - audio/wav
+      - audio/ogg
+      - application/zip
+      - application/x-rar-compressed
+      - application/x-7z-compressed
+
+logging:
+  level:
+    root: INFO
+    com.cams.resource_service: DEBUG
+    org.springframework.cloud.openfeign: DEBUG

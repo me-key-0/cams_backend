@@ -1,5 +1,6 @@
 package com.cams.course_service.model;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.cams.course_service.model.Assignment.Status;
@@ -22,13 +23,11 @@ public class CourseSession {
     private Integer semester;
     private Integer year;
 
-
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
 
     private Long departmentId;
-
     
     @ElementCollection
     @CollectionTable(
@@ -40,4 +39,31 @@ public class CourseSession {
 
     @Enumerated(EnumType.STRING)
     private Status status;
+
+    @Column(nullable = false)
+    private Boolean isActive; // Admin can activate/deactivate sessions
+
+    @Column(nullable = false)
+    private Boolean enrollmentOpen; // Controls if students can enroll
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    private LocalDateTime activatedAt;
+
+    @Column(nullable = false)
+    private Long createdBy; // Admin ID who created this session
+    
+    // Reference to the batch this course session belongs to
+    @ManyToOne
+    @JoinColumn(name = "batch_id")
+    private Batch batch;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        if (isActive == null) isActive = false;
+        if (enrollmentOpen == null) enrollmentOpen = false;
+        if (status == null) status = Status.UPCOMING;
+    }
 }

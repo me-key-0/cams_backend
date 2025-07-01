@@ -1,5 +1,7 @@
 package com.cams.user_service.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,4 +19,8 @@ public class EvaluationQuestion {
     private Long id;
 
     private String question;
+    
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private EvaluationCategory category;
 }

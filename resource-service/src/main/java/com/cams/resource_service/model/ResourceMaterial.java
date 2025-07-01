@@ -11,10 +11,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.Set;
 
-/**
- * Entity representing a resource material in the system.
- * This can be a document, video, photo, link, or folder.
- */
 @Entity
 @Table(name = "resource_materials")
 @Data
@@ -34,15 +30,21 @@ public class ResourceMaterial {
     private String description;
 
     @Column(nullable = false)
-    private String fileUrl;
+    private String fileName; // Stored filename (UUID-based)
 
-    private String fileName;
+    @Column(nullable = false)
+    private String originalFileName; // Original filename from user
+
+    @Column(nullable = false)
+    private String filePath; // Full path to file
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ResourceType type;
 
     private Long fileSize; // in bytes
+
+    private String mimeType; // MIME type of the file
 
     @ElementCollection
     @CollectionTable(
@@ -63,12 +65,16 @@ public class ResourceMaterial {
 
     @Column(nullable = false)
     private Long uploadedBy;
-    
-    private String originalFileName;
+
+    @Column(nullable = false)
+    private String uploaderName; // Name of the lecturer who uploaded
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ResourceStatus status;
+
+    // For LINK type resources
+    private String linkUrl;
 
     @PrePersist
     protected void onCreate() {
@@ -78,4 +84,4 @@ public class ResourceMaterial {
             status = ResourceStatus.ACTIVE;
         }
     }
-} 
+}

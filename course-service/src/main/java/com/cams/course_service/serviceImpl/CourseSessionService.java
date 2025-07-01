@@ -1,8 +1,12 @@
 package com.cams.course_service.serviceImpl;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.cams.course_service.dto.CourseSessionResponse;
 import com.cams.course_service.model.CourseSession;
 import com.cams.course_service.repository.CourseSessionRepository;
 
@@ -40,6 +44,11 @@ public class CourseSessionService implements com.cams.course_service.service.Cou
     //         .build();
     // }
 
-    
+    @Override
+    public List<CourseSession> getCourseSessionsByDepartment(Long departmentId) {
+        // This would need a custom query in the repository
+        // For now, we'll filter all course sessions
+        return courseSessionRepository.findByDepartmentId(departmentId);
+    }
 
 }
