@@ -1,0 +1,171 @@
+services:
+  service-discovery:
+    build: ./service-discovery
+    container_name: service-discovery
+    ports:
+      - "8761:8761"
+    networks:
+      - micro-net
+
+  auth-db:
+    image: mariadb:11
+    container_name: auth-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: $904380
+      MYSQL_DATABASE: auth_dbcd 
+    ports:
+      - "3307:3306"
+    networks:
+      - micro-net
+
+  user-db:
+    image: mariadb:11
+    container_name: user-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: $904380
+      MYSQL_DATABASE: user_db
+    ports:
+      - "3308:3306"
+    networks:
+      - micro-net
+
+  course-db:
+    image: mariadb:11
+    container_name: course-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: $904380
+      MYSQL_DATABASE: course_db
+    ports:
+      - "3309:3306"
+    networks:
+      - micro-net
+
+  # grade-db:
+  #   image: mariadb:11
+  #   container_name: grade-db
+  #   restart: always
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: $904380
+  #     MYSQL_DATABASE: grade_db
+  #   ports:
+  #     - "3310:3306"
+  #   networks:
+  #     - micro-net
+
+  resource-db:
+    image: mariadb:11
+    container_name: resource-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: $904380
+      MYSQL_DATABASE: resource_db
+    ports:
+      - "3311:3306"
+    networks:
+      - micro-net
+
+  # communication-db:
+  #   image: mariadb:11
+  #   container_name: communication-db
+  #   restart: always
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: $904380
+  #     MYSQL_DATABASE: communication_db
+  #   ports:
+  #     - "3312:3306"
+  #   networks:
+  #     - micro-net
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8760:8760"
+    depends_on:
+      - service-discovery
+    networks:
+      - micro-net
+
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    ports:
+      - "8763:8763"
+    depends_on:
+      - service-discovery
+    networks:
+      - micro-net
+
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    ports:
+      - "8762:8762"
+    depends_on:
+      - service-discovery
+    networks:
+      - micro-net
+
+  course-service:
+    build: ./course-service
+    container_name: course-service
+    ports:
+      - "8764:8764"
+    depends_on:
+      - service-discovery
+    networks:
+      - micro-net
+
+  resource-service:
+    build: ./resource-service
+    container_name: resource-service
+    ports:
+      - "8767:8767"
+    depends_on:
+      - service-discovery
+    networks:
+      - micro-net
+
+  # communication-service:
+  #   build: ./communication-service
+  #   container_name: communication-service
+  #   ports:
+  #     - "8765:8765"
+  #   depends_on:
+  #     - service-discovery
+  #   networks:
+  #     - micro-net
+
+  # grade-service:
+  #   build: ./grade-service
+  #   container_name: grade-service
+  #   ports:
+  #     - "8766:8766"
+  #   depends_on:
+  #     - service-discovery
+  #   networks:
+  #     - micro-net
+
+  prometheus:
+    image: prom/prometheus
+    container_name: blissful_spence
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - micro-net
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - micro-net
+
+networks:
+  micro-net:

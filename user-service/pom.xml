@@ -72,22 +72,29 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+			<version>1.15.2</version>
+		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
-<!--			<plugin>-->
-<!--				<groupId>org.apache.maven.plugins</groupId>-->
-<!--				<artifactId>maven-compiler-plugin</artifactId>-->
-<!--				<configuration>-->
-<!--					<annotationProcessorPaths>-->
-<!--						<path>-->
-<!--							<groupId>org.projectlombok</groupId>-->
-<!--							<artifactId>lombok</artifactId>-->
-<!--						</path>-->
-<!--					</annotationProcessorPaths>-->
-<!--				</configuration>-->
-<!--			</plugin>-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<debug>true</debug>
+					<debuglevel>lines,vars,source</debuglevel>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -100,6 +107,18 @@
 					</excludes>
 				</configuration>
 			</plugin>
+			<!-- <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.11.0</version> 
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<debug>true</debug>
+					<debuglevel>lines,vars,source</debuglevel>
+				</configuration>
+				</plugin> -->
+
 		</plugins>
 	</build>
 

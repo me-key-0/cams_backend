@@ -1,0 +1,43 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'user-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['user-service:8763']
+
+  - job_name: 'service-discovery'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['service-discovery:8761']
+
+  - job_name: 'auth-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['auth-service:8762']
+
+  - job_name: 'communication-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['communication-service:8765']
+
+  - job_name: 'grade-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['grade-service:8766']
+
+  - job_name: 'resource-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['resource-service:8767']
+
+  - job_name: 'api-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['api-gateway:8760']
+
+  - job_name: 'course-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['course-service:8764']

@@ -1,7 +1,9 @@
 package com.cams.user_service.controller;
 
 import com.cams.user_service.dto.*;
+import com.cams.user_service.model.Evaluation;
 import com.cams.user_service.model.EvaluationQuestion;
+import com.cams.user_service.repository.EvaluationRepository;
 import com.cams.user_service.service.EvaluationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,9 @@ public class EvaluationController {
 
     @Autowired
     private EvaluationService evaluationService;
+
+    @Autowired
+    private EvaluationRepository evaluationRepository;
 
     // Session management endpoints
     @PostMapping("/session")
@@ -84,15 +89,15 @@ public class EvaluationController {
     }
     
     // New endpoint for submitting evaluation with studentId in path
-    @PostMapping("/submit/{studentId}")
-    public ResponseEntity<ConfirmationDto> submitEvaluationWithStudentId(
-            @PathVariable Long studentId,
-            @RequestBody EvaluationSubmitRequest request) {
+    // @PostMapping("/submit/{studentId}")
+    // public ResponseEntity<ConfirmationDto> submitEvaluationWithStudentId(
+    //         @PathVariable Long studentId,
+    //         @RequestBody EvaluationSubmitRequest request) {
         
-        ConfirmationDto result = evaluationService.submitEvaluationWithCourseSession(
-            studentId, request.getCourseSessionId(), request.getAnswers());
-        return ResponseEntity.ok(result);
-    }
+    //     ConfirmationDto result = evaluationService.submitEvaluationWithCourseSession(
+    //         studentId, request.getCourseSessionId(), request.getAnswers());
+    //     return ResponseEntity.ok(result);
+    // }
 
     // Questions and categories endpoints
     @GetMapping("/questions")
@@ -153,5 +158,25 @@ public class EvaluationController {
         
         List<EvaluationAnalyticsResponse> analytics = evaluationService.getDepartmentEvaluationAnalytics(departmentId);
         return ResponseEntity.ok(analytics);
+    }
+
+    
+
+    @GetMapping("/submission-status/{classId}/{studentId}")
+    public ResponseEntity<ConfirmationDto> getEvaluationStatus(
+            @PathVariable Long classId,
+            @PathVariable Long studentId)
+             {
+        
+        ConfirmationDto dto = null;
+        List<Evaluation> existingEvaluations = evaluationRepository.findByStudentId(studentId);
+        boolean alreadySubmitted = existingEvaluations.stream()
+            .anyMatch(e -> e.getStudent().getId().equals(studentId) && 
+                     e.getSession().getId().equals(classId));
+        
+        if (alreadySubmitted) {
+            dto = new ConfirmationDto(false, "You have already submitted an evaluation for this lecturer");
+        }
+        return ResponseEntity.ok(dto);
     }
 }

@@ -102,11 +102,16 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+			<version>1.15.2</version>
+		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
-			<plugin>
+			<!-- <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
@@ -117,7 +122,7 @@
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
-			</plugin>
+			</plugin> -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>

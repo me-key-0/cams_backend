@@ -25,4 +25,5 @@ public interface CourseServiceClient {
     
     @GetMapping("/api/session/{courseSessionId}/lecturers")
     List<Long> getLecturerIdsByCourseSessionId(@PathVariable("courseSessionId") Long courseSessionId);
+
 }

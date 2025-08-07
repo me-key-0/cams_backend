@@ -159,9 +159,10 @@ public class EvaluationService implements com.cams.user_service.service.Evaluati
             return new ConfirmationDto(false, "Student not found");
         }
         
-        List<Lecturer> lecturerIds = courseServiceClient.getLecturerIdsByCourseSessionId(request.getCourseSessionId());
 
-        Lecturer lecturerOpt = lecturerIds.get(0);
+        List<Long> lecturerIds = courseServiceClient.getLecturerIdsByCourseSessionId(request.getCourseSessionId());
+
+        Long lecturerOpt = lecturerIds.get(0);
 
         // System.out.println("........................."+ x);
         // Optional<Lecturer> lecturerOpt = lecturerService.getLecturerById(x.getId());
@@ -186,21 +187,23 @@ public class EvaluationService implements com.cams.user_service.service.Evaluati
         }
         
         // Check if student is enrolled in the course
-        boolean isEnrolled = courseServiceClient.isStudentEnrolled(studentId, session.getCourseSessionId());
-        if (!isEnrolled) {
-            return new ConfirmationDto(false, "Student is not enrolled in this course");
-        }
+        // boolean isEnrolled = courseServiceClient.isStudentEnrolled(studentId, session.getCourseSessionId());
+        // if (!isEnrolled) {
+        //     return new ConfirmationDto(false, "Student is not enrolled in this course");
+        // }
         
+
+
         // Check if lecturer is assigned to the course
-        boolean isLecturerAssigned = courseServiceClient.validateLecturerForCourseSession(
-            request.getLecturerId(), session.getCourseSessionId());
-        if (!isLecturerAssigned) {
-            return new ConfirmationDto(false, "Lecturer is not assigned to this course");
-        }
+        // boolean isLecturerAssigned = courseServiceClient.validateLecturerForCourseSession(
+        //     request.getLecturerId(), session.getCourseSessionId());
+        // if (!isLecturerAssigned) {
+        //     return new ConfirmationDto(false, "Lecturer is not assigned to this course");
+        // }
 
         Student student = studentOpt.get();
         // Lecturer lecturer = lecturerOpt.get();
-        Lecturer lecturer = lecturerOpt;
+        Lecturer lecturer = lecturerRepository.findById(lecturerOpt).get();
 
         if (request.getAnswers() == null || request.getAnswers().isEmpty()) {
             return new ConfirmationDto(false, "No evaluation answers provided");
@@ -209,7 +212,7 @@ public class EvaluationService implements com.cams.user_service.service.Evaluati
         // Check if student has already submitted an evaluation for this lecturer in this session
         List<Evaluation> existingEvaluations = evaluationRepository.findByStudentId(studentId);
         boolean alreadySubmitted = existingEvaluations.stream()
-            .anyMatch(e -> e.getLecturer().getId().equals(request.getLecturerId()) && 
+            .anyMatch(e -> e.getLecturer().getId().equals(lecturerOpt) && 
                      e.getSession().getId().equals(session.getId()));
         
         if (alreadySubmitted) {
@@ -220,6 +223,7 @@ public class EvaluationService implements com.cams.user_service.service.Evaluati
         evaluation.setStudent(student);
         evaluation.setLecturer(lecturer);
         evaluation.setSession(session);
+        evaluationRepository.save(evaluation);
 
 
         for (EvaluationAnswerDto answerDto : request.getAnswers()) {
@@ -238,7 +242,7 @@ public class EvaluationService implements com.cams.user_service.service.Evaluati
             evaluationAnswerRepository.save(evaluationAnswer);
         }
         
-        evaluationRepository.save(evaluation);
+        
         
         return new ConfirmationDto(true, "Evaluation Submitted Successfully!");
     }
